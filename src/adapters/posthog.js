@@ -40,6 +40,17 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
     if (event.target.href) props.target_href = event.target.href;
     if (event.target.text) props.target_text = event.target.text;
 
+    // Flatten approach dynamics into top-level properties for PostHog filtering.
+    // These are only present when enableApproachDynamics is true.
+    if (event.approach) {
+      props.approach_velocity_mean = event.approach.approach_velocity_mean;
+      props.approach_velocity_final = event.approach.approach_velocity_final;
+      props.approach_deceleration = event.approach.approach_deceleration;
+      props.approach_corrections = event.approach.approach_corrections;
+      props.approach_distance = event.approach.approach_distance;
+      props.approach_pause_ms = event.approach.approach_pause_ms;
+    }
+
     ph.capture(eventName, props);
   };
 }
