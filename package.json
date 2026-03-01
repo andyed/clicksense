@@ -1,0 +1,39 @@
+{
+  "name": "clicksense",
+  "version": "0.1.0",
+  "description": "Mousedown→mouseup latency as cognitive load signal. Vendor-agnostic click confidence measurement.",
+  "type": "module",
+  "main": "dist/clicksense.js",
+  "module": "dist/clicksense.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/clicksense.esm.js",
+      "require": "./dist/clicksense.cjs.js"
+    },
+    "./adapters/posthog": "./src/adapters/posthog.js",
+    "./adapters/callback": "./src/adapters/callback.js"
+  },
+  "files": [
+    "dist/",
+    "src/"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "keywords": [
+    "click",
+    "cognitive-load",
+    "analytics",
+    "ux",
+    "hci",
+    "mousedown",
+    "mouseup",
+    "posthog"
+  ],
+  "author": "Andy Edmonds <andyed@alum.cmu.edu>",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
