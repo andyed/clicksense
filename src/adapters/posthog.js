@@ -28,6 +28,7 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
     // Flatten target into top-level properties for easier PostHog filtering
     const props = {
       duration_ms: event.duration_ms,
+      input_type: event.input_type,
       click_x: event.x,
       click_y: event.y,
       drag_distance: event.drag_distance,

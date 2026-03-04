@@ -338,6 +338,7 @@ export class ClickSense {
       x: e.clientX,
       y: e.clientY,
       target: e.target,
+      input_type: 'mouse',
       // Harvest approach dynamics at mousedown time (when the decision was made)
       approach: this._velocityBuf ? this._harvestApproach(e.timeStamp) : null,
     };
@@ -359,6 +360,7 @@ export class ClickSense {
       x: t.clientX,
       y: t.clientY,
       target: e.target,
+      input_type: 'touch',
     };
   }
 
@@ -392,6 +394,7 @@ export class ClickSense {
     const event = {
       duration_ms: Math.round(duration),
       timestamp: Date.now(),
+      input_type: p.input_type,
       x: Math.round(p.x),
       y: Math.round(p.y),
       drag_distance: Math.round(dragDistance),
