@@ -47,9 +47,31 @@ The approach dynamics extension is the bridge. By capturing cursor velocity in a
 
 ## Current status
 
-The core library ships at 2KB and is deployed in production (Scrutinizer). The question is whether click duration + approach dynamics, combined, produce a practical signal that neither achieves alone — and whether within-subject baselines and identity-relevant contexts strengthen it enough for a contribution.
+The core library ships at 2KB and is deployed in production across 18 blog posts on [scrutinizer.app](https://andyed.github.io/scrutinizer-www/blog/). Data flows to PostHog alongside ReadingDepth (paragraph-level absorption tracking) and standard analytics.
 
-Full analysis, study details, and data exploration are in the [i2lab/clicksense](https://github.com/i2lab/clicksense) repository.
+### Deployed instrumentation
+
+| Signal | Library | What it captures |
+|--------|---------|-----------------|
+| Click hold duration | [ClickSense](https://github.com/andyed/clicksense) | `mousedown→mouseup` latency (ms), target element, drag filtering |
+| Approach dynamics | ClickSense | Pre-click cursor velocity, deceleration, corrections, pause duration |
+| Paragraph absorption | [ReadingDepth](https://github.com/andyed/reading-depth) | Per-paragraph dwell time vs expected read time (238 WPM baseline) |
+
+### Key findings (March 2026)
+
+From 117 events with approach data across 4 hold duration buckets:
+
+- **Deceleration is monotonic** across hold buckets: -0.0011 (quick) → -0.0052 (deliberative). Slower clicks approach more carefully.
+- **Deliberative clicks (120-160ms) show a 316ms pre-click pause** — 2.4x longer than other buckets. This is decision cost, not motor cost.
+- **Course corrections peak in the "normal" bucket** (12.0), not deliberative. Normal-speed clicks course-correct more, suggesting active aiming. Deliberative clicks arrive slowly and pause — they don't aim harder, they wait.
+
+### Analysis resources
+
+- **PostHog dashboard**: [Hold Duration × Approach Dynamics](https://us.posthog.com/project/258589/dashboard/1330450)
+- **HogQL queries**: [`queries/analysis.sql`](../queries/analysis.sql) — 8 queries (duration distributions, per-user baselines, target breakdown, session drift, approach dynamics)
+- **Library source**: [github.com/andyed/clicksense](https://github.com/andyed/clicksense)
+
+The question remains whether click duration + approach dynamics, combined, produce a practical signal that neither achieves alone — and whether within-subject baselines and identity-relevant contexts strengthen it enough for a contribution.
 
 ## Gaze-cursor coordination as complementary signal
 
@@ -67,4 +89,4 @@ Recent work shows that gaze and mouse cursor aren't redundant — the *relations
 
 ---
 
-*Data: Edmonds (CrowdFlower, 2015), Azzopardi & Edmonds (Prolific/treconomics, 2022). Library: [github.com/andyed/clicksense](https://github.com/andyed/clicksense)*
+*Data: Edmonds (CrowdFlower, 2015), Azzopardi & Edmonds (Prolific/treconomics, 2022). Library: [github.com/andyed/clicksense](https://github.com/andyed/clicksense). Production deployment: [scrutinizer.app/blog](https://andyed.github.io/scrutinizer-www/blog/)*

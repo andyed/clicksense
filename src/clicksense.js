@@ -213,7 +213,18 @@ export class ClickSense {
    * Returns summary statistics or null if insufficient data.
    */
   _harvestApproach(mousedownTime) {
-    if (!this._velocityBuf || this._bufCount < 2) return null;
+    if (!this._velocityBuf) return null;
+
+    // Always report pause — it's independent of velocity sample availability.
+    // A long pause (cursor parked on target) is itself a strong signal.
+    const approach_pause_ms = isFinite(this._lastSignificantMoveTime)
+      ? Math.round(mousedownTime - this._lastSignificantMoveTime)
+      : 0;
+
+    // If insufficient velocity data, still return pause-only payload
+    if (this._bufCount < 2) {
+      return { approach_pause_ms };
+    }
 
     // Collect samples within the APPROACH_WINDOW_MS before mousedown,
     // reading backward from the most recent sample.
@@ -244,7 +255,9 @@ export class ClickSense {
       }
     }
 
-    if (samples500.length < 2) return null;
+    if (samples500.length < 2) {
+      return { approach_pause_ms };
+    }
 
     // --- Summary statistics ---
 
@@ -311,12 +324,6 @@ export class ClickSense {
         approach_distance += avgVel * dt;
       }
     }
-
-    // Pause: time since last significant movement (>1px), in ms.
-    // 0 = clicking while still moving; 100+ = paused to aim before clicking.
-    const approach_pause_ms = isFinite(this._lastSignificantMoveTime)
-      ? Math.round(mousedownTime - this._lastSignificantMoveTime)
-      : 0;
 
     return {
       approach_velocity_mean: Math.round(approach_velocity_mean * 1000) / 1000,

@@ -41,3 +41,18 @@ Planned:
 - Touch support (touchstart/touchend) for mobile
 - `data-clicksense="label"` attribute for explicit target naming
 - No PostHog dependency in core — adapter pattern only
+
+## Analysis
+
+- **PostHog SQL queries**: `queries/analysis.sql` — 8 HogQL queries (data inventory, duration distributions, per-user baselines, target breakdown, session drift, approach dynamics).
+- **Dashboard**: [Hold Duration × Approach Dynamics](https://us.posthog.com/project/258589/dashboard/1330450) — 117 events with approach data across 4 hold buckets.
+- **Key finding (Mar 2026)**: Deceleration is monotonic across hold buckets (-0.0011 → -0.0052). Deliberative clicks (120-160ms) show a 316ms pre-click pause — 2.4x other buckets — suggesting decision cost, not motor cost. Corrections peak in the "normal" bucket (12.0), not deliberative.
+- **Property names**: `duration_ms`, `click_x`, `click_y`, `drag_distance`, `target_tag`, `target_id`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`.
+
+## Cross-Project Research
+
+This project is part of a connected research program:
+- **Research log**: `~/Documents/dev/research-log.jsonl` — auto-captured WebFetch/WebSearch URLs across all Claude Code sessions. Query ClickSense-relevant entries: `jq 'select(.project=="clicksense")' ~/Documents/dev/research-log.jsonl`
+- **interests2025 pipeline**: Research URLs are ingested into Qdrant (`node src/ingest_research_log.js --index`) for semantic search across all projects.
+- **Related projects**: Scrutinizer (visual perception), Psychodeli+ (rendering), histospire (browsing behavior)
+- **Session history**: Each research log entry includes `transcript_path` for tracing back to the Claude Code conversation where the research occurred.
