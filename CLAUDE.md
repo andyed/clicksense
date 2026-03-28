@@ -47,7 +47,7 @@ Planned:
 - **PostHog SQL queries**: `queries/analysis.sql` — 8 HogQL queries (data inventory, duration distributions, per-user baselines, target breakdown, session drift, approach dynamics).
 - **Dashboard**: [Hold Duration × Approach Dynamics](https://us.posthog.com/project/258589/dashboard/1330450) — 117 events with approach data across 4 hold buckets.
 - **Key finding (Mar 2026)**: Deceleration is monotonic across hold buckets (-0.0011 → -0.0052). Deliberative clicks (120-160ms) show a 316ms pre-click pause — 2.4x other buckets — suggesting decision cost, not motor cost. Corrections peak in the "normal" bucket (12.0), not deliberative.
-- **Property names**: `duration_ms`, `click_x`, `click_y`, `drag_distance`, `target_tag`, `target_id`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`.
+- **Property names**: `duration_ms`, `click_x`, `click_y`, `drag_distance`, `input_type`, `target_tag`, `target_id`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`, `approach_linearity`, `approach_max_deviation`, `approach_trajectory_type`.
 
 ## Cross-Project Research
 

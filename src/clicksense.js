@@ -49,8 +49,8 @@ const DEFAULTS = {
 // which is critical for accurate velocity estimation on high-polling-rate mice.
 const RING_BUFFER_SIZE = 60;
 
-// Each sample occupies 2 Float64 slots: [velocity (px/ms), timestamp (ms)]
-const SAMPLE_STRIDE = 2;
+// Each sample occupies 4 Float64 slots: [velocity (px/ms), timestamp (ms), x (px), y (px)]
+const SAMPLE_STRIDE = 4;
 
 // Time windows for summary statistics (ms)
 const APPROACH_WINDOW_MS = 500;     // mean velocity, corrections, distance
@@ -197,6 +197,8 @@ export class ClickSense {
     const offset = this._bufHead * SAMPLE_STRIDE;
     this._velocityBuf[offset] = velocity;
     this._velocityBuf[offset + 1] = timestamp;
+    this._velocityBuf[offset + 2] = x;
+    this._velocityBuf[offset + 3] = y;
 
     // Advance head, wrap around
     this._bufHead = (this._bufHead + 1) % RING_BUFFER_SIZE;
@@ -236,7 +238,7 @@ export class ClickSense {
     // Gather relevant samples into temporary arrays for statistics.
     // Using plain arrays here (max 60 elements) — the typed buffer is for
     // the hot path (mousemove); harvest runs once per click.
-    const samples500 = [];  // { velocity, timestamp } within 500ms
+    const samples500 = [];  // { velocity, timestamp, x, y } within 500ms
     const samples300 = [];  // { velocity, timestamp } within 300ms
 
     for (let i = 0; i < this._bufCount; i++) {
@@ -245,11 +247,13 @@ export class ClickSense {
       const offset = idx * SAMPLE_STRIDE;
       const velocity = this._velocityBuf[offset];
       const timestamp = this._velocityBuf[offset + 1];
+      const x = this._velocityBuf[offset + 2];
+      const y = this._velocityBuf[offset + 3];
 
       // Stop if we've gone past the 500ms window
       if (timestamp < cutoff500) break;
 
-      samples500.push({ velocity, timestamp });
+      samples500.push({ velocity, timestamp, x, y });
       if (timestamp >= cutoff300) {
         samples300.push({ velocity, timestamp });
       }
@@ -325,6 +329,69 @@ export class ClickSense {
       }
     }
 
+    // --- Trajectory shape metrics ---
+    // Computed from x,y coordinates in the approach window.
+    // samples500 is newest-first; reverse for start→end order.
+
+    let approach_linearity = 1;
+    let approach_max_deviation = 0;
+    let approach_trajectory_type = 'straight';
+
+    if (samples500.length >= 3) {
+      // Start and end points (oldest and newest in the window)
+      const start = samples500[samples500.length - 1];
+      const end = samples500[0];
+      const straightDx = end.x - start.x;
+      const straightDy = end.y - start.y;
+      const straightDist = Math.sqrt(straightDx * straightDx + straightDy * straightDy);
+
+      // Linearity: straight-line distance / total path distance
+      // 1.0 = perfectly straight, lower = more curved/corrected
+      if (approach_distance > 0 && straightDist > 0) {
+        approach_linearity = Math.min(1, straightDist / approach_distance);
+      }
+
+      // Max deviation (MAD): largest perpendicular distance from any point
+      // to the ideal straight line from start to end.
+      // Uses point-to-line distance formula: |ax + by + c| / sqrt(a² + b²)
+      if (straightDist > 1) {
+        const a = straightDy;
+        const b = -straightDx;
+        const c = straightDx * start.y - straightDy * start.x;
+        const norm = Math.sqrt(a * a + b * b);
+
+        let maxDev = 0;
+        let signFlips = 0;
+        let prevSign = 0;
+
+        for (let i = 0; i < samples500.length; i++) {
+          const signedDist = (a * samples500[i].x + b * samples500[i].y + c) / norm;
+          const absDist = Math.abs(signedDist);
+          if (absDist > maxDev) maxDev = absDist;
+
+          // Track sign changes for trajectory type classification
+          const sign = signedDist > 0.5 ? 1 : (signedDist < -0.5 ? -1 : 0);
+          if (sign !== 0 && prevSign !== 0 && sign !== prevSign) {
+            signFlips++;
+          }
+          if (sign !== 0) prevSign = sign;
+        }
+
+        approach_max_deviation = maxDev;
+
+        // Classify trajectory type:
+        // - straight: MAD < 10% of straight-line distance
+        // - curved: MAD >= 10%, no sign flips (consistent deflection)
+        // - reversal: sign flips in deviation (change-of-mind)
+        if (signFlips > 0) {
+          approach_trajectory_type = 'reversal';
+        } else if (maxDev / straightDist >= 0.1) {
+          approach_trajectory_type = 'curved';
+        }
+        // else stays 'straight'
+      }
+    }
+
     return {
       approach_velocity_mean: Math.round(approach_velocity_mean * 1000) / 1000,
       approach_velocity_final: Math.round(approach_velocity_final * 1000) / 1000,
@@ -332,6 +399,9 @@ export class ClickSense {
       approach_corrections,
       approach_distance: Math.round(approach_distance),
       approach_pause_ms,
+      approach_linearity: Math.round(approach_linearity * 1000) / 1000,
+      approach_max_deviation: Math.round(approach_max_deviation),
+      approach_trajectory_type,
     };
   }
 
@@ -345,6 +415,7 @@ export class ClickSense {
       x: e.clientX,
       y: e.clientY,
       target: e.target,
+      input_type: 'mouse',
       // Harvest approach dynamics at mousedown time (when the decision was made)
       approach: this._velocityBuf ? this._harvestApproach(e.timeStamp) : null,
     };
@@ -366,6 +437,7 @@ export class ClickSense {
       x: t.clientX,
       y: t.clientY,
       target: e.target,
+      input_type: 'touch',
     };
   }
 
@@ -402,6 +474,7 @@ export class ClickSense {
       x: Math.round(p.x),
       y: Math.round(p.y),
       drag_distance: Math.round(dragDistance),
+      input_type: p.input_type,
       target: this._extractTarget(p.target),
     };
 

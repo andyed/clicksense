@@ -1,0 +1,4 @@
+device_type,events,has_input_type,avg_duration_ms
+Desktop,3725,0,132.9
+Mobile,1473,0,167.0
+Tablet,3,0,75.0

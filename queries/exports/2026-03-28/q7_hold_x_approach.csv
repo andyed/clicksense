@@ -1,0 +1,5 @@
+hold_bucket,n,avg_vel_mean,med_vel_mean,avg_vel_final,avg_pause_ms,avg_corrections,avg_distance,avg_decel
+1_ballistic,216,0.632,0.358,0.167,126.0,10.15,203.4,-0.0012
+2_normal,1230,0.602,0.348,0.169,122.1,12.3,189.3,-0.0032
+3_deliberative,1061,0.838,0.458,0.253,127.4,9.59,218.5,-0.0044
+4_extended,288,1.011,0.491,0.226,187.6,7.66,232.6,-0.0076

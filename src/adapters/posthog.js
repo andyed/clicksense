@@ -8,15 +8,17 @@
  *   new ClickSense({
  *     onCapture: createPostHogAdapter(),       // uses window.posthog
  *     onCapture: createPostHogAdapter(posthog), // explicit instance
+ *     onCapture: createPostHogAdapter(posthog, 'click_confidence', { runtime: 'electron' }),
  *   });
  */
 
 /**
  * @param {object} [posthogInstance] - PostHog instance. Falls back to window.posthog.
  * @param {string} [eventName='click_confidence'] - PostHog event name.
+ * @param {object} [extraProps] - Additional properties merged into every event (e.g. { runtime: 'electron' }).
  * @returns {function} onCapture callback for ClickSense
  */
-export function createPostHogAdapter(posthogInstance, eventName = 'click_confidence') {
+export function createPostHogAdapter(posthogInstance, eventName = 'click_confidence', extraProps) {
   return function onCapture(event) {
     const ph = posthogInstance || window.posthog;
 
@@ -31,6 +33,7 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
       click_x: event.x,
       click_y: event.y,
       drag_distance: event.drag_distance,
+      input_type: event.input_type,
       target_tag: event.target.tag,
     };
 
@@ -49,7 +52,12 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
       props.approach_corrections = event.approach.approach_corrections;
       props.approach_distance = event.approach.approach_distance;
       props.approach_pause_ms = event.approach.approach_pause_ms;
+      props.approach_linearity = event.approach.approach_linearity;
+      props.approach_max_deviation = event.approach.approach_max_deviation;
+      props.approach_trajectory_type = event.approach.approach_trajectory_type;
     }
+
+    if (extraProps) Object.assign(props, extraProps);
 
     ph.capture(eventName, props);
   };

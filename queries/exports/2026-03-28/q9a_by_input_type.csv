@@ -1,0 +1,2 @@
+input_type,events,users,sessions,first_event,last_event,with_approach,avg_duration_ms,median_duration_ms
+,5201,550,665,2026-03-01 18:04:08.838000+00:00,2026-03-28 15:14:30.163000+00:00,2795,142.5,116.0

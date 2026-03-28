@@ -1,0 +1,3 @@
+input_type,n,mean_ms,median_ms,p25_ms,p75_ms,sd_ms,avg_drag_px,pct_ballistic,pct_normal,pct_deliberative,pct_extended
+mouse,3725,132.9,119.0,100.0,143.0,114.5,0.3,8.5,41.9,37.8,11.9
+touch,1476,166.9,99.0,79.0,128.0,284.2,0.2,26.3,46.1,17.0,10.6

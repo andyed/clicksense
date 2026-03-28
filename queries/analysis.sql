@@ -25,6 +25,8 @@ SELECT
     min(timestamp)                                      AS first_event,
     max(timestamp)                                      AS last_event,
     countIf(properties.target_id IS NOT NULL)            AS events_with_target_id,
+    countIf(properties.input_type IS NOT NULL)             AS events_with_input_type,
+    countIf(properties.input_type = 'touch')               AS touch_events,
     countIf(properties.approach_velocity_mean IS NOT NULL) AS events_with_approach,
     round(countIf(properties.approach_velocity_mean IS NOT NULL) * 100.0 / count(), 1)
                                                         AS approach_coverage_pct
@@ -343,3 +345,224 @@ GROUP BY tag, target_id
 HAVING total_clicks >= 3
 ORDER BY uncertain_pct DESC, total_clicks DESC
 LIMIT 30
+
+
+-- ============================================================================
+-- QUERY 9: Touch vs Mouse — Data Inventory
+-- ============================================================================
+-- How many events came from touch vs mouse? Uses properties.input_type
+-- ('mouse' or 'touch') set by clicksense core. For events captured before
+-- input_type was added, falls back to PostHog's $device_type as a proxy.
+--
+-- Run this first to see if there's enough touch data to analyze.
+
+-- 9a: By input_type (preferred, requires recent clicksense version)
+SELECT
+    properties.input_type                                    AS input_type,
+    count()                                                  AS events,
+    uniq(person_id)                                          AS users,
+    uniq(properties.$session_id)                             AS sessions,
+    min(timestamp)                                           AS first_event,
+    max(timestamp)                                           AS last_event,
+    countIf(properties.approach_velocity_mean IS NOT NULL)    AS with_approach,
+    round(avg(properties.duration_ms), 1)                    AS avg_duration_ms,
+    round(quantile(0.50)(properties.duration_ms), 1)         AS median_duration_ms
+FROM events
+WHERE event = 'click_confidence'
+GROUP BY input_type
+ORDER BY events DESC
+
+-- 9b: By device_type (fallback for older events without input_type)
+SELECT
+    properties.$device_type                                  AS device_type,
+    count()                                                  AS events,
+    countIf(properties.input_type IS NOT NULL)                AS has_input_type,
+    round(avg(properties.duration_ms), 1)                    AS avg_duration_ms
+FROM events
+WHERE event = 'click_confidence'
+GROUP BY device_type
+ORDER BY events DESC
+
+
+-- ============================================================================
+-- QUERY 10: Touch Duration Distribution
+-- ============================================================================
+-- Same as Query 2 but filtered to likely-touch events (Mobile/Tablet device).
+-- Touch hold durations may differ from mouse: finger-on-glass timing has
+-- different motor dynamics than mouse button press.
+--
+-- Compare these stats against Query 2 to see if the distributions diverge.
+
+-- 10a: Summary statistics (touch only)
+SELECT
+    count()                                              AS n,
+    round(avg(properties.duration_ms), 1)                AS mean_ms,
+    round(quantile(0.50)(properties.duration_ms), 1)     AS median_ms,
+    round(quantile(0.25)(properties.duration_ms), 1)     AS p25_ms,
+    round(quantile(0.75)(properties.duration_ms), 1)     AS p75_ms,
+    round(quantile(0.05)(properties.duration_ms), 1)     AS p5_ms,
+    round(quantile(0.95)(properties.duration_ms), 1)     AS p95_ms,
+    round(stddevPop(properties.duration_ms), 1)          AS sd_ms,
+    round(min(properties.duration_ms), 1)                AS min_ms,
+    round(max(properties.duration_ms), 1)                AS max_ms,
+    countIf(properties.duration_ms < 80)                 AS ballistic,
+    countIf(properties.duration_ms >= 80 AND properties.duration_ms < 120)  AS normal,
+    countIf(properties.duration_ms >= 120 AND properties.duration_ms < 160) AS deliberative,
+    countIf(properties.duration_ms >= 160)               AS extended
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.duration_ms IS NOT NULL
+    AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+
+-- 10b: 10ms-bin histogram (touch only)
+SELECT
+    floor(properties.duration_ms / 10) * 10 AS bin_start,
+    count()                                  AS n
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.duration_ms IS NOT NULL
+    AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+GROUP BY bin_start
+ORDER BY bin_start
+
+
+-- ============================================================================
+-- QUERY 11: Touch vs Mouse Duration Comparison
+-- ============================================================================
+-- Side-by-side stats. Expect touch to be slightly longer than mouse —
+-- finger-on-glass has higher contact latency and less precise release timing.
+
+SELECT
+    coalesce(
+        properties.input_type,
+        multiIf(properties.$device_type IN ('Mobile', 'Tablet'), 'touch', 'mouse')
+    )                                                        AS input_type,
+    count()                                                  AS n,
+    round(avg(properties.duration_ms), 1)                    AS mean_ms,
+    round(quantile(0.50)(properties.duration_ms), 1)         AS median_ms,
+    round(quantile(0.25)(properties.duration_ms), 1)         AS p25_ms,
+    round(quantile(0.75)(properties.duration_ms), 1)         AS p75_ms,
+    round(stddevPop(properties.duration_ms), 1)              AS sd_ms,
+    round(avg(properties.drag_distance), 1)                  AS avg_drag_px,
+    -- bucket distribution as percentages
+    round(countIf(properties.duration_ms < 80) * 100.0 / count(), 1)
+                                                             AS pct_ballistic,
+    round(countIf(properties.duration_ms >= 80 AND properties.duration_ms < 120) * 100.0 / count(), 1)
+                                                             AS pct_normal,
+    round(countIf(properties.duration_ms >= 120 AND properties.duration_ms < 160) * 100.0 / count(), 1)
+                                                             AS pct_deliberative,
+    round(countIf(properties.duration_ms >= 160) * 100.0 / count(), 1)
+                                                             AS pct_extended
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.duration_ms IS NOT NULL
+GROUP BY input_type
+ORDER BY input_type
+
+
+-- ============================================================================
+-- QUERY 12: Touch Targets — What Are People Tapping?
+-- ============================================================================
+-- Target breakdown for touch events. Mobile UI elements may have different
+-- tap confidence profiles than desktop (bigger targets, less precision).
+
+-- 12a: By tag
+SELECT
+    properties.target_tag                                AS tag,
+    count()                                              AS taps,
+    round(quantile(0.50)(properties.duration_ms), 1)     AS median_ms,
+    round(quantile(0.25)(properties.duration_ms), 1)     AS p25_ms,
+    round(quantile(0.75)(properties.duration_ms), 1)     AS p75_ms,
+    round(stddevPop(properties.duration_ms), 1)          AS sd_ms,
+    round(avg(properties.drag_distance), 1)              AS avg_drag_px
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.duration_ms IS NOT NULL
+    AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+GROUP BY tag
+ORDER BY taps DESC
+
+-- 12b: By specific element, top 20
+SELECT
+    coalesce(properties.target_label, properties.target_id, properties.target_text) AS target,
+    properties.target_tag                                AS tag,
+    count()                                              AS taps,
+    round(quantile(0.50)(properties.duration_ms), 1)     AS median_ms,
+    round(quantile(0.75)(properties.duration_ms) - quantile(0.25)(properties.duration_ms), 1)
+                                                         AS iqr_ms,
+    round(avg(properties.drag_distance), 1)              AS avg_drag_px
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.duration_ms IS NOT NULL
+    AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+GROUP BY target, tag
+HAVING taps >= 2
+ORDER BY taps DESC
+LIMIT 20
+
+
+-- ============================================================================
+-- QUERY 13: Touch Drag Distance Distribution
+-- ============================================================================
+-- On touch, drag_distance is the finger displacement from touchstart to
+-- touchend. Higher variance than mouse because finger contact area is large
+-- and minor slips are common. Events >10px are already filtered out by
+-- clicksense, but the sub-10px distribution is informative.
+
+SELECT
+    floor(properties.drag_distance) AS drag_px,
+    count()                         AS n
+FROM events
+WHERE event = 'click_confidence'
+    AND properties.drag_distance IS NOT NULL
+    AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+GROUP BY drag_px
+ORDER BY drag_px
+
+
+-- ============================================================================
+-- QUERY 14: Touch Session Drift
+-- ============================================================================
+-- Same as Query 5 but for touch sessions. Does tap duration change over
+-- a mobile session? Mobile fatigue patterns may differ from desktop.
+
+SELECT
+    session_id,
+    click_count,
+    round(first_half_median, 1)   AS first_half_median_ms,
+    round(second_half_median, 1)  AS second_half_median_ms,
+    round(second_half_median - first_half_median, 1) AS drift_ms,
+    multiIf(
+        second_half_median - first_half_median < -10, 'familiarization',
+        second_half_median - first_half_median > 10,  'fatigue',
+        'stable'
+    ) AS drift_label
+FROM (
+    SELECT
+        properties.$session_id AS session_id,
+        count() AS click_count,
+        quantileIf(0.50)(properties.duration_ms, rn <= half_n)  AS first_half_median,
+        quantileIf(0.50)(properties.duration_ms, rn > half_n)   AS second_half_median
+    FROM (
+        SELECT
+            properties.$session_id,
+            properties.duration_ms,
+            row_number() OVER (PARTITION BY properties.$session_id ORDER BY timestamp) AS rn,
+            floor(count() OVER (PARTITION BY properties.$session_id) / 2)              AS half_n,
+            count() OVER (PARTITION BY properties.$session_id)                         AS total_n
+        FROM events
+        WHERE event = 'click_confidence'
+            AND properties.duration_ms IS NOT NULL
+            AND properties.$session_id IS NOT NULL
+            AND (properties.input_type = 'touch'
+         OR (properties.input_type IS NULL AND properties.$device_type IN ('Mobile', 'Tablet')))
+    )
+    WHERE total_n >= 6
+    GROUP BY session_id
+)
+ORDER BY click_count DESC
