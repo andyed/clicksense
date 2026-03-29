@@ -14,6 +14,7 @@
             persistence: 'memory'
         });
     </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet">
     <style>
         .fixation { font-size: 50px; }
@@ -23,11 +24,29 @@
             color: white; font-weight: bold;
             font-size: 18px; padding: 12px 32px; border: none; border-radius: 6px;
             min-width: 80px; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         #jspsych-html-button-response-btngroup {
             margin-top: 30px;
             gap: 16px;
+        }
+
+        /* Mobile: larger tap targets, stacked buttons */
+        @media (max-width: 480px) {
+            .stroop-word { font-size: 40px; }
+            .jspsych-btn.stroop-btn {
+                font-size: 20px; padding: 16px 24px;
+                min-width: 100%; display: block;
+            }
+            #jspsych-html-button-response-btngroup {
+                flex-direction: column;
+                gap: 12px;
+                padding: 0 16px;
+            }
+            /* Results tables scroll horizontally */
+            table { font-size: 0.85em; }
         }
     </style>
 </head>
@@ -116,7 +135,8 @@ var jsPsych = initJsPsych({
             function fmt2(v) { return isFinite(v) ? v.toFixed(2) : '—'; }
 
             // Hold duration table
-            html += '<h4 style="margin:16px 0 8px">Hold Duration (mousedown &rarr; mouseup)</h4>';
+            var holdLabel = isTouchDevice ? 'Hold Duration (touchstart &rarr; touchend)' : 'Hold Duration (mousedown &rarr; mouseup)';
+            html += '<h4 style="margin:16px 0 8px">' + holdLabel + '</h4>';
             html += '<table style="border-collapse:collapse; width:100%; text-align:center">';
             html += '<tr><th style="border-bottom:2px solid #333; padding:6px">Condition</th>' +
                     '<th style="border-bottom:2px solid #333; padding:6px">N</th>' +
@@ -187,11 +207,15 @@ var jsPsych = initJsPsych({
             }
         }
 
+        if (isTouchDevice && !clicksenseData.some(function(e) { return e.approach; })) {
+            html += '<p style="margin-top:16px; color:#888; font-size:0.9em">Approach trajectory data is only available on desktop (mouse input).</p>';
+        }
+
         html += '<p style="margin-top:20px; color:#666">Full trial + clicksense data in console.</p></div>';
 
         // Send summary event to PostHog
         if (window.posthog) {
-            var summary = { experiment: 'stroop', session_id: sessionId, total_trials: 54 };
+            var summary = { experiment: 'stroop', session_id: sessionId, total_trials: 54, input_type: isTouchDevice ? 'touch' : 'mouse' };
             ['congruent', 'incongruent', 'unrelated'].forEach(function(type) {
                 var d = jsPsych.data.get().filter({stimulus_type: type});
                 summary[type + '_rt_mean'] = Math.round(d.select('rt').mean());
@@ -218,22 +242,24 @@ var jsPsych = initJsPsych({
 
 var timeline = [];
 
-// Welcome (keyboard — just a splash screen)
+// Detect input type for PostHog tagging
+var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+// Welcome
 timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: '<p>Welcome to the Stroop experiment.</p><p>Press <strong>SPACE</strong> to begin.</p>',
-    choices: [' ']
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<p>Welcome to the Stroop experiment.</p>',
+    choices: ['Begin']
 });
 
 // Instructions
 timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
+    type: jsPsychHtmlButtonResponse,
     stimulus: '<p>A colored word will appear on screen.</p>' +
-        '<p>Click the button matching the <strong>ink color</strong>, not the word.</p>' +
+        '<p>Tap the button matching the <strong>ink color</strong>, not the word.</p>' +
         '<p>Respond as quickly and accurately as you can.</p>' +
-        '<p>There are 54 trials. Button positions will change.</p>' +
-        '<p>Press <strong>SPACE</strong> to start.</p>',
-    choices: [' '],
+        '<p>There are 54 trials. Button positions will change.</p>',
+    choices: ['Start'],
     post_trial_gap: 1000
 });
 
