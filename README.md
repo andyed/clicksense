@@ -181,9 +181,13 @@ npm run build   # → dist/clicksense.js (IIFE), .esm.js, .cjs.js
 npm run dev     # watch mode
 ```
 
+## Try it
+
+[**Run the Stroop experiment**](https://andyed.github.io/clicksense/stroop/) — a classic color-word interference task instrumented with ClickSense. You'll contribute anonymous mouse dynamics data and see your own per-condition hold duration and approach trajectory results at the end.
+
 ## Research
 
-See [`docs/clicksense-paper.md`](docs/clicksense-paper.md) for the full empirical framing: study designs, effect sizes, confound analysis, and where click duration does and doesn't work.
+See [`docs/clicksense-research.md`](docs/clicksense-research.md) for the full empirical framing: study designs, effect sizes, confound analysis, and where click duration does and doesn't work.
 
 ## License
 
