@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+<head>
+    <title>Stroop Task — jsPsych 7 + ClickSense</title>
+    <script src="https://unpkg.com/jspsych@7.3.4"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="clicksense.js"></script>
+    <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet">
+    <style>
+        .fixation { font-size: 50px; }
+        .stroop-word { font-size: 50px; font-weight: bold; }
+
+        .jspsych-btn.stroop-btn {
+            color: white; font-weight: bold;
+            font-size: 18px; padding: 12px 32px; border: none; border-radius: 6px;
+            min-width: 80px; cursor: pointer;
+        }
+
+        #jspsych-html-button-response-btngroup {
+            margin-top: 30px;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body></body>
+<script>
+
+// --- ClickSense setup ---
+var clicksenseData = [];
+var currentTrialMeta = null;
+var cs = new ClickSenseLib.ClickSense({
+    enableApproachDynamics: true,
+    onCapture: function(event) {
+        if (currentTrialMeta) {
+            event.stimulus_type = currentTrialMeta.stimulus_type;
+            event.word = currentTrialMeta.word;
+            event.color = currentTrialMeta.color;
+            event.button_order = currentTrialMeta.button_order;
+            event.correct_position = currentTrialMeta.correct_position;
+        }
+        clicksenseData.push(event);
+        console.log('ClickSense:', event.duration_ms + 'ms', event);
+    }
+});
+
+// --- jsPsych ---
+var jsPsych = initJsPsych({
+    on_finish: function() {
+        var congruent = jsPsych.data.get().filter({stimulus_type: 'congruent'});
+        var incongruent = jsPsych.data.get().filter({stimulus_type: 'incongruent'});
+        var unrelated = jsPsych.data.get().filter({stimulus_type: 'unrelated'});
+
+        var html = '<div style="max-width:700px; margin:60px auto; font-family:sans-serif; line-height:1.6">';
+        html += '<h2>Results</h2>';
+
+        // RT + accuracy table
+        html += '<table style="border-collapse:collapse; width:100%; text-align:center">';
+        html += '<tr><th style="border-bottom:2px solid #333; padding:8px">Condition</th>' +
+                '<th style="border-bottom:2px solid #333; padding:8px">Mean RT (ms)</th>' +
+                '<th style="border-bottom:2px solid #333; padding:8px">Accuracy</th></tr>';
+
+        [[congruent, 'Congruent'], [incongruent, 'Incongruent'], [unrelated, 'Unrelated']].forEach(function(pair) {
+            var d = pair[0], label = pair[1];
+            var rt = Math.round(d.select('rt').mean());
+            var acc = Math.round(100 * d.select('correct').mean());
+            html += '<tr><td style="padding:8px; border-bottom:1px solid #ddd">' + label + '</td>' +
+                    '<td style="padding:8px; border-bottom:1px solid #ddd">' + rt + '</td>' +
+                    '<td style="padding:8px; border-bottom:1px solid #ddd">' + acc + '%</td></tr>';
+        });
+        html += '</table>';
+
+        // ClickSense per-condition breakdown
+        if (clicksenseData.length > 0) {
+            html += '<h3 style="margin-top:30px">ClickSense — Motor Dynamics</h3>';
+
+            function csForCondition(type) {
+                return clicksenseData.filter(function(e) { return e.stimulus_type === type; });
+            }
+            function mean(arr) {
+                if (!arr.length) return NaN;
+                return arr.reduce(function(a, b) { return a + b; }, 0) / arr.length;
+            }
+            function fmt(v) { return isFinite(v) ? Math.round(v) : '—'; }
+            function fmt2(v) { return isFinite(v) ? v.toFixed(2) : '—'; }
+
+            // Hold duration table
+            html += '<h4 style="margin:16px 0 8px">Hold Duration (mousedown &rarr; mouseup)</h4>';
+            html += '<table style="border-collapse:collapse; width:100%; text-align:center">';
+            html += '<tr><th style="border-bottom:2px solid #333; padding:6px">Condition</th>' +
+                    '<th style="border-bottom:2px solid #333; padding:6px">N</th>' +
+                    '<th style="border-bottom:2px solid #333; padding:6px">Mean (ms)</th>' +
+                    '<th style="border-bottom:2px solid #333; padding:6px">Min</th>' +
+                    '<th style="border-bottom:2px solid #333; padding:6px">Max</th></tr>';
+
+            ['congruent', 'incongruent', 'unrelated'].forEach(function(type) {
+                var events = csForCondition(type);
+                var durs = events.map(function(e) { return e.duration_ms; });
+                var label = type.charAt(0).toUpperCase() + type.slice(1);
+                html += '<tr><td style="padding:6px; border-bottom:1px solid #ddd">' + label + '</td>' +
+                        '<td style="padding:6px; border-bottom:1px solid #ddd">' + durs.length + '</td>' +
+                        '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt(mean(durs)) + '</td>' +
+                        '<td style="padding:6px; border-bottom:1px solid #ddd">' + (durs.length ? Math.min.apply(null, durs) : '—') + '</td>' +
+                        '<td style="padding:6px; border-bottom:1px solid #ddd">' + (durs.length ? Math.max.apply(null, durs) : '—') + '</td></tr>';
+            });
+            html += '</table>';
+
+            // Approach dynamics table (only if available)
+            var hasApproach = clicksenseData.some(function(e) { return e.approach; });
+            if (hasApproach) {
+                html += '<h4 style="margin:16px 0 8px">Approach Trajectory</h4>';
+                html += '<table style="border-collapse:collapse; width:100%; text-align:center; font-size:0.9em">';
+                html += '<tr><th style="border-bottom:2px solid #333; padding:6px">Condition</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Mean Velocity</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Final Velocity</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Decel.</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Corrections</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Distance (px)</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Pause (ms)</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Linearity</th>' +
+                        '<th style="border-bottom:2px solid #333; padding:6px">Trajectory</th></tr>';
+
+                ['congruent', 'incongruent', 'unrelated'].forEach(function(type) {
+                    var events = csForCondition(type).filter(function(e) { return e.approach; });
+                    if (!events.length) return;
+                    var label = type.charAt(0).toUpperCase() + type.slice(1);
+                    var a = events.map(function(e) { return e.approach; });
+
+                    var velMean = mean(a.map(function(x) { return x.approach_velocity_mean || 0; }));
+                    var velFinal = mean(a.map(function(x) { return x.approach_velocity_final || 0; }));
+                    var decel = mean(a.map(function(x) { return x.approach_deceleration || 0; }));
+                    var corrections = mean(a.map(function(x) { return x.approach_corrections || 0; }));
+                    var dist = mean(a.map(function(x) { return x.approach_distance || 0; }));
+                    var pause = mean(a.map(function(x) { return x.approach_pause_ms || 0; }));
+                    var linearity = mean(a.map(function(x) { return x.approach_linearity || 0; }));
+
+                    // Most common trajectory type
+                    var trajCounts = {};
+                    a.forEach(function(x) {
+                        var t = x.approach_trajectory_type || 'unknown';
+                        trajCounts[t] = (trajCounts[t] || 0) + 1;
+                    });
+                    var trajMode = Object.keys(trajCounts).sort(function(a, b) { return trajCounts[b] - trajCounts[a]; })[0];
+
+                    html += '<tr><td style="padding:6px; border-bottom:1px solid #ddd">' + label + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt2(velMean) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt2(velFinal) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt2(decel) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt2(corrections) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt(dist) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt(pause) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + fmt2(linearity) + '</td>' +
+                            '<td style="padding:6px; border-bottom:1px solid #ddd">' + trajMode + '</td></tr>';
+                });
+                html += '</table>';
+            }
+        }
+
+        html += '<p style="margin-top:20px; color:#666">Full trial + clicksense data in console.</p></div>';
+
+        document.body.innerHTML = html;
+        console.log('jsPsych data:', JSON.stringify(jsPsych.data.get().values(), null, 2));
+        console.log('ClickSense data:', JSON.stringify(clicksenseData, null, 2));
+    }
+});
+
+var timeline = [];
+
+// Welcome (keyboard — just a splash screen)
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '<p>Welcome to the Stroop experiment.</p><p>Press <strong>SPACE</strong> to begin.</p>',
+    choices: [' ']
+});
+
+// Instructions
+timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '<p>A colored word will appear on screen.</p>' +
+        '<p>Click the button matching the <strong>ink color</strong>, not the word.</p>' +
+        '<p>Respond as quickly and accurately as you can.</p>' +
+        '<p>There are 54 trials. Button positions will change.</p>' +
+        '<p>Press <strong>SPACE</strong> to start.</p>',
+    choices: [' '],
+    post_trial_gap: 1000
+});
+
+// --- Trial generation with counterbalanced button position ---
+
+var COLORS = ['Red', 'Green', 'Blue'];
+var COLOR_HEX = { Red: '#d32f2f', Green: '#388e3c', Blue: '#1565c0' };
+var REPS = 6; // 6 reps x 9 stimuli = 54 trials
+
+// All 6 permutations of 3 buttons
+var BUTTON_ORDERS = [
+    ['Red','Green','Blue'], ['Red','Blue','Green'],
+    ['Green','Red','Blue'], ['Green','Blue','Red'],
+    ['Blue','Red','Green'], ['Blue','Green','Red']
+];
+
+// 9 base stimuli
+var baseStimuli = [
+    { word: 'SHIP',    color: 'red',   stimulus_type: 'unrelated'   },
+    { word: 'MONKEY',  color: 'green', stimulus_type: 'unrelated'   },
+    { word: 'ZAMBONI', color: 'blue',  stimulus_type: 'unrelated'   },
+    { word: 'RED',     color: 'red',   stimulus_type: 'congruent'   },
+    { word: 'GREEN',   color: 'green', stimulus_type: 'congruent'   },
+    { word: 'BLUE',    color: 'blue',  stimulus_type: 'congruent'   },
+    { word: 'GREEN',   color: 'red',   stimulus_type: 'incongruent' },
+    { word: 'BLUE',    color: 'green', stimulus_type: 'incongruent' },
+    { word: 'RED',     color: 'blue',  stimulus_type: 'incongruent' }
+];
+
+// Build full trial list: each stimulus x 6 reps, each rep gets a different button order
+var allTrials = [];
+baseStimuli.forEach(function(stim) {
+    var orders = BUTTON_ORDERS.slice();
+    for (var i = orders.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = orders[i]; orders[i] = orders[j]; orders[j] = tmp;
+    }
+    for (var r = 0; r < REPS; r++) {
+        var btnOrder = orders[r % orders.length];
+        var correctColor = stim.color.charAt(0).toUpperCase() + stim.color.slice(1);
+        var correctIndex = btnOrder.indexOf(correctColor);
+        allTrials.push({
+            stimulus: '<p class="stroop-word" style="color:' + stim.color + '">' + stim.word + '</p>',
+            button_order: btnOrder,
+            data: {
+                word: stim.word,
+                color: stim.color,
+                stimulus_type: stim.stimulus_type,
+                correct_response: correctIndex,
+                button_order: btnOrder.join('-'),
+                correct_position: correctIndex
+            }
+        });
+    }
+});
+
+// Shuffle all trials
+for (var i = allTrials.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = allTrials[i]; allTrials[i] = allTrials[j]; allTrials[j] = tmp;
+}
+
+// Fixation cross
+var fixation = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: '<p class="fixation">+</p>',
+    choices: "NO_KEYS",
+    trial_duration: 500
+};
+
+// Stroop trial — button response with per-trial button order
+var word = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: jsPsych.timelineVariable('stimulus'),
+    choices: jsPsych.timelineVariable('button_order'),
+    button_html: '<button class="jspsych-btn stroop-btn">%choice%</button>',
+    data: jsPsych.timelineVariable('data'),
+    on_load: function() {
+        var btns = document.querySelectorAll('.stroop-btn');
+        btns.forEach(function(btn) {
+            var label = btn.textContent.trim();
+            btn.style.backgroundColor = COLOR_HEX[label] || '#666';
+        });
+    },
+    on_start: function(trial) {
+        currentTrialMeta = {
+            stimulus_type: trial.data.stimulus_type,
+            word: trial.data.word,
+            color: trial.data.color,
+            button_order: trial.data.button_order,
+            correct_position: trial.data.correct_position
+        };
+    },
+    on_finish: function(data) {
+        data.correct = (data.response === data.correct_response);
+        currentTrialMeta = null;
+    }
+};
+
+timeline.push({
+    timeline: [fixation, word],
+    timeline_variables: allTrials
+});
+
+jsPsych.run(timeline);
+
+</script>
+</html>
