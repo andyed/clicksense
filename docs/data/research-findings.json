@@ -1,0 +1,267 @@
+{
+  "version": "1.0",
+  "generated": "2026-03-29",
+  "description": "Structured extraction of numeric findings from ClickSense research docs and production data. Each entry has specific, cited values suitable for chart rendering.",
+  "findings": [
+    {
+      "id": "age-gradient",
+      "source": {"authors": "Edmonds", "year": 2015, "title": "CrowdFlower click duration study", "doi": null, "n": 291},
+      "domain": "confounds",
+      "finding_type": "gradient",
+      "description": "Click hold duration increases with age across demographic groups",
+      "values": {"25-34": 87, "65+": 137},
+      "unit": "ms",
+      "chart": {"type": "bar", "title": "Hold Duration by Age Group", "suffix": "ms", "sort": false, "width": 30}
+    },
+    {
+      "id": "device-gap",
+      "source": {"authors": "Edmonds", "year": 2015, "title": "CrowdFlower click duration study", "doi": null, "n": 291},
+      "domain": "confounds",
+      "finding_type": "comparison",
+      "description": "Trackpad vs mouse creates a 16ms gap — larger than the 7ms cognitive task effect",
+      "values": {"trackpad-mouse gap": 16, "cognitive task effect": 7},
+      "unit": "ms",
+      "chart": {"type": "bar", "title": "Effect Sizes: Device vs Cognition", "suffix": "ms", "sort": true, "width": 30}
+    },
+    {
+      "id": "within-person-sd",
+      "source": {"authors": "Edmonds", "year": 2015, "title": "CrowdFlower click duration study", "doi": null, "n": 291},
+      "domain": "confounds",
+      "finding_type": "effect_size",
+      "description": "Individual motor habit variation (30-50ms SD) swamps the cognitive signal (7ms)",
+      "values": {"within-person SD low": 30, "within-person SD high": 50},
+      "unit": "ms",
+      "chart": null
+    },
+    {
+      "id": "pre-click-dwell-discrimination",
+      "source": {"authors": "Azzopardi & Edmonds", "year": 2022, "title": "Prolific click study", "doi": null, "n": 227},
+      "domain": "dwell-time",
+      "finding_type": "effect_size",
+      "description": "Pre-click dwell time discriminates correct from incorrect responses by 91ms (p < 10⁻²⁵)",
+      "values": {"discrimination": 91},
+      "unit": "ms",
+      "chart": null
+    },
+    {
+      "id": "non-voter-identity-effect",
+      "source": {"authors": "Edmonds", "year": 2015, "title": "CrowdFlower click duration study", "doi": null, "n": null},
+      "domain": "confounds",
+      "finding_type": "comparison",
+      "description": "Non-voters hold 19ms longer on prospective vs retrospective voting questions",
+      "values": {"prospective-retrospective gap": 19},
+      "unit": "ms",
+      "chart": null
+    },
+    {
+      "id": "point-of-no-return",
+      "source": {"authors": "Schultze-Kraft et al.", "year": 2016, "title": "Point of no return in vetoing self-initiated movements", "doi": "10.1073/pnas.1513569112", "n": null},
+      "domain": "motor-control",
+      "finding_type": "threshold",
+      "description": "Brain reaches point of no return ~200ms before movement onset — vetoing impossible after",
+      "values": {"threshold": 200},
+      "unit": "ms",
+      "chart": null
+    },
+    {
+      "id": "impact-activation",
+      "source": {"authors": "Oulasvirta, Kim & Lee", "year": 2018, "title": "Neuromechanics of a Button Press", "doi": null, "n": null},
+      "domain": "motor-control",
+      "finding_type": "effect_size",
+      "description": "Impact Activation achieves 94% improvement in rapid tapping performance",
+      "values": {"improvement": 94},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "gaze-cursor-dwell-correlation",
+      "source": {"authors": "Chen, Anderson & Sohn", "year": 2001, "title": "Mouse cursor and eye movements on web browsing", "doi": "10.1145/634067.634234", "n": null},
+      "domain": "gaze-cursor",
+      "finding_type": "correlation",
+      "description": "Average gaze-cursor dwell time correlation across web pages; >50% of pages show r>0.8",
+      "values": {"r": 0.58},
+      "unit": "r",
+      "chart": null
+    },
+    {
+      "id": "gaze-cursor-aoi-fraction",
+      "source": {"authors": "Navalpakkam et al. (Google)", "year": 2012, "title": "Eye-mouse behavior measurement", "doi": null, "n": null},
+      "domain": "gaze-cursor",
+      "finding_type": "correlation",
+      "description": "Fraction of page dwell on area of interest correlates strongly between eye and mouse",
+      "values": {"r²": 0.89},
+      "unit": "r²",
+      "chart": null
+    },
+    {
+      "id": "hover-vs-click-conversion",
+      "source": {"authors": "Comscore/Pretarget", "year": null, "title": "Hover interactions and conversion prediction", "doi": null, "n": null},
+      "domain": "gaze-cursor",
+      "finding_type": "comparison",
+      "description": "Hover interactions predict conversions 50× better than clicks alone",
+      "values": {"hover r": 0.49, "click r": 0.01},
+      "unit": "r",
+      "chart": {"type": "bar", "title": "Conversion Prediction: Hover vs Click", "suffix": "", "sort": true, "width": 30}
+    },
+    {
+      "id": "gaze-cursor-lead",
+      "source": {"authors": "Huang, White & Buscher", "year": 2012, "title": "Gaze and cursor alignment in web search", "doi": "10.1145/2207676.2208591", "n": null},
+      "domain": "gaze-cursor",
+      "finding_type": "threshold",
+      "description": "Eyes lead cursor by ~300ms when target location is unknown",
+      "values": {"lead time": 300},
+      "unit": "ms",
+      "chart": null
+    },
+    {
+      "id": "hover-fraud-inflation",
+      "source": {"authors": "IAS/Microsoft", "year": null, "title": "Hover rates on fraudulent impressions", "doi": null, "n": null},
+      "domain": "dwell-time",
+      "finding_type": "effect_size",
+      "description": "Fraudulent/bot impressions show 27% higher hover rates than legitimate traffic",
+      "values": {"inflation": 27},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "device-metrics-affected",
+      "source": {"authors": "ScienceDirect", "year": 2024, "title": "Mouse dynamics credibility study", "doi": null, "n": null},
+      "domain": "biometrics",
+      "finding_type": "proportion",
+      "description": "95 of 108 evaluated behavioral metrics are significantly affected by mouse device characteristics",
+      "values": {"affected": 95, "total": 108},
+      "unit": "count",
+      "chart": null
+    },
+    {
+      "id": "keystroke-fatigue-accuracy",
+      "source": {"authors": "AIJFR", "year": 2025, "title": "Cognitive fatigue prediction via keystroke dynamics", "doi": null, "n": null},
+      "domain": "implicit-signals",
+      "finding_type": "accuracy",
+      "description": "Neural networks achieve 91% accuracy predicting cognitive fatigue from keystroke dynamics",
+      "values": {"accuracy": 91},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "mousetrap-pca-variance",
+      "source": {"authors": "Wulff, Kieslich et al.", "year": 2025, "title": "Movement tracking with mousetrap", "doi": "10.3758/s13428-025-02695-2", "n": null},
+      "domain": "implicit-signals",
+      "finding_type": "effect_size",
+      "description": "First PCA component explains 53% of trajectory variance; curvature indices intercorrelate r=.79-.99",
+      "values": {"PCA variance explained": 53},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "curvature-intercorrelation",
+      "source": {"authors": "Wulff, Kieslich et al.", "year": 2025, "title": "Movement tracking with mousetrap", "doi": "10.3758/s13428-025-02695-2", "n": null},
+      "domain": "implicit-signals",
+      "finding_type": "correlation",
+      "description": "Trajectory curvature indices within class show very high intercorrelation",
+      "values": {"r low": 0.79, "r high": 0.99},
+      "unit": "r",
+      "chart": null
+    },
+    {
+      "id": "gaze-mouse-fusion-f1",
+      "source": {"authors": "Zhu, Shi, Song & Cai", "year": 2023, "title": "Gaze and mouse fusion for activity recognition", "doi": "10.1145/3610876", "n": null},
+      "domain": "implicit-signals",
+      "finding_type": "accuracy",
+      "description": "Joint gaze-mouse fusion achieves 94.87% F1 on 8-class activity recognition, +7.44% over unimodal",
+      "values": {"F1 score": 94.87, "improvement over unimodal": 7.44},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "keystroke-emotion-accuracy",
+      "source": {"authors": "Epp, Lippold & Mandryk", "year": 2011, "title": "Keystroke dynamics for emotional states", "doi": null, "n": null},
+      "domain": "implicit-signals",
+      "finding_type": "accuracy",
+      "description": "77-88% accuracy detecting confidence, hesitance, nervousness via keystroke dwell time",
+      "values": {"accuracy low": 77, "accuracy high": 88},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "operation-time-cognitive-load",
+      "source": {"authors": "unnamed", "year": 2025, "title": "Cognitive load in mixed reality", "doi": null, "n": null},
+      "domain": "cognitive-load",
+      "finding_type": "effect_size",
+      "description": "Operation time increases 49% under high cognitive load in mixed reality",
+      "values": {"increase": 49},
+      "unit": "%",
+      "chart": null
+    },
+    {
+      "id": "nasa-tlx-icc",
+      "source": {"authors": "NASA Ames", "year": null, "title": "NASA-TLX reliability", "doi": null, "n": null},
+      "domain": "cognitive-load",
+      "finding_type": "correlation",
+      "description": "NASA-TLX internal consistency across studies",
+      "values": {"ICC low": 0.71, "ICC high": 0.81},
+      "unit": "ICC",
+      "chart": null
+    },
+    {
+      "id": "deceleration-monotonic",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data (n=2,795)", "doi": null, "n": 2795},
+      "domain": "production-data",
+      "finding_type": "gradient",
+      "description": "Approach deceleration increases monotonically across hold duration buckets",
+      "values": {"ballistic": -0.0012, "normal": -0.0032, "deliberative": -0.0044, "extended": -0.0076},
+      "unit": "slope",
+      "chart": {"type": "bar", "title": "Approach Deceleration by Hold Bucket", "suffix": "", "sort": false, "width": 30}
+    },
+    {
+      "id": "touch-vs-mouse-median",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data", "doi": null, "n": 5201},
+      "domain": "production-data",
+      "finding_type": "comparison",
+      "description": "Touch is faster at the median but has 2.5× the standard deviation",
+      "values": {"mouse median": 119, "touch median": 99, "mouse SD": 115, "touch SD": 284},
+      "unit": "ms",
+      "chart": {"type": "bar", "title": "Touch vs Mouse Hold Duration", "suffix": "ms", "sort": false, "width": 30}
+    },
+    {
+      "id": "touch-ballistic-percentage",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data", "doi": null, "n": 5201},
+      "domain": "production-data",
+      "finding_type": "comparison",
+      "description": "Touch has 3× more ballistic clicks — finger-on-glass has lower activation threshold",
+      "values": {"mouse": 8.5, "touch": 26.3},
+      "unit": "%",
+      "chart": {"type": "bar", "title": "Ballistic Clicks (<80ms)", "suffix": "%", "sort": false, "width": 30}
+    },
+    {
+      "id": "deliberative-pause",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data (n=2,795)", "doi": null, "n": 2795},
+      "domain": "production-data",
+      "finding_type": "comparison",
+      "description": "Extended hold clicks pause 50% longer before committing — decision cost, not motor cost",
+      "values": {"ballistic": 126, "normal": 122, "deliberative": 127, "extended": 188},
+      "unit": "ms",
+      "chart": {"type": "bar", "title": "Pre-click Pause by Hold Bucket", "suffix": "ms", "sort": false, "width": 30}
+    },
+    {
+      "id": "corrections-peak-normal",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data (n=2,795)", "doi": null, "n": 2795},
+      "domain": "production-data",
+      "finding_type": "comparison",
+      "description": "Course corrections peak in normal bucket, not deliberative — reversals reflect active targeting",
+      "values": {"ballistic": 10.15, "normal": 12.3, "deliberative": 9.59, "extended": 7.66},
+      "unit": "count",
+      "chart": {"type": "bar", "title": "Direction Reversals by Hold Bucket", "suffix": "", "sort": false, "width": 30}
+    },
+    {
+      "id": "hold-duration-distribution",
+      "source": {"authors": "ClickSense production", "year": 2026, "title": "scrutinizer.app data (n=2,795)", "doi": null, "n": 2795},
+      "domain": "production-data",
+      "finding_type": "proportion",
+      "description": "Hold duration distribution across four behavioral categories",
+      "values": {"ballistic (<80ms)": 216, "normal (80-120ms)": 1230, "deliberative (120-160ms)": 1061, "extended (160ms+)": 288},
+      "unit": "count",
+      "chart": {"type": "bar", "title": "Hold Duration Distribution", "suffix": "", "sort": false, "width": 30}
+    }
+  ]
+}

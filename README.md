@@ -10,6 +10,15 @@ Hold duration alone is a small signal (~7ms task effect across studies). The str
 
 What makes hold duration interesting is what it's *independent from*. Self-reported cognitive load (NASA-TLX) doesn't correlate with it. Neither does task correctness. It's not a noisy proxy for things we already measure. The strongest effects show up around identity-relevant content and domain expertise: political experts differentiate facts from opinions in their click latency; non-experts don't. Non-voters hold 19ms longer on prospective voting questions than retrospective ones.
 
+```
+  Hold Duration Distribution (n=2,795, scrutinizer.app production data)
+
+         ballistic (<80ms)  █████                             216
+         normal (80-120ms)  ██████████████████████████████  1,230
+  deliberative (120-160ms)  █████████████████████████       1,061
+         extended (160ms+)  ███████                           288
+```
+
 **Reference:** Edmonds (2016) ["Learning from Complex Online Behavior"](https://youtu.be/j38fm48gTgg?t=1348), Bloomreach "Big Brains" talk. Data: Edmonds (CrowdFlower, 2015, n=291), Azzopardi & Edmonds (Prolific, 2022, n=227).
 
 ## Install
@@ -76,6 +85,17 @@ The pre-click mouse trajectory is where the stronger signal lives. When `enableA
 | `approach_pause_ms` | Time since last significant movement. 0 = clicked while moving; 100+ = paused to aim |
 
 A confident click looks like: smooth deceleration, low corrections, short pause, ballistic hold. An uncertain click: course corrections, longer pause, extended hold. The combination captures the full motor signature of a decision.
+
+```
+  Approach Deceleration by Hold Bucket (production data, n=2,795)
+
+     ballistic  ████                            -0.0012
+        normal  ████████████                    -0.0032
+  deliberative  █████████████████               -0.0044
+      extended  ██████████████████████████████  -0.0076
+
+  Deceleration is monotonic — longer holds = stronger braking before click.
+```
 
 ## Options
 

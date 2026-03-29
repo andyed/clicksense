@@ -49,6 +49,12 @@ Planned:
 - **Key finding (Mar 2026)**: Deceleration is monotonic across hold buckets (-0.0011 → -0.0052). Deliberative clicks (120-160ms) show a 316ms pre-click pause — 2.4x other buckets — suggesting decision cost, not motor cost. Corrections peak in the "normal" bucket (12.0), not deliberative.
 - **Property names**: `duration_ms`, `click_x`, `click_y`, `drag_distance`, `input_type`, `target_tag`, `target_id`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`, `approach_linearity`, `approach_max_deviation`, `approach_trajectory_type`.
 
+## Research Data
+
+- **Structured findings**: `docs/data/research-findings.json` — 26 extracted numeric findings from cited papers and production data. Each entry has source citation, values, unit, and optional chart spec. Consumable by `ascii-charts/chart.py --json`.
+- **CSV exports**: `queries/exports/2026-03-28/` — 5,201 events from 550 users (first data pull, Mar 2026).
+- **Deep-dive docs**: `docs/deep-dive-*.md` — 6 research summaries (Fitts's law, dwell time, cognitive load, implicit signals, related paradigms). The research-findings.json extracts the chartable numbers from these.
+
 ## Cross-Project Research
 
 This project is part of a connected research program:

@@ -1,5 +1,11 @@
 # ClickSense TODO
 
+## Analysis & Methodology
+
+- [ ] **Trajectory shape classification**: ClickSense currently captures temporal dynamics (velocity, deceleration, corrections) but not trajectory types. Adding shape classification (straight, curved, change-of-mind) would give both the temporal-dynamics and type-based views described in Wulff et al. (2025). Options: implement `mt_cluster`-style k-means on trajectory shapes in JS, or export mousetrap-compatible data format and classify in R.
+- [ ] **mousetrap-compatible export**: Output ClickSense approach data in a format mousetrap-Web can import. This gives access to the full R analysis pipeline (mt_measures, mt_cluster, mt_map) without reimplementing it. See `docs/wulff-kieslich-2025-mousetrap-tutorial.pdf` for format specs.
+- [ ] **Sample entropy metric**: Add spatiotemporal disorder measure to approach dynamics. Currently not captured. Wulff et al. show it correlates moderately (r=.50-.54) with curvature indices but provides distinct signal about processing fluency.
+
 ## Logo & Branding
 
 - [ ] Generate logo candidates with Nano Banana 2 using prompts below
@@ -49,3 +55,8 @@ and geometric. Must work at 16x16 favicon scale.
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta property="og:image" content="og-image.png">
 ```
+
+## From Master Backlog (2026-03-25)
+
+- [ ] **Add `approach_linearity` metric**: Ratio of straight-line distance to total path distance (0-1). Computed from velocity ring buffer at harvest. Strengthens uncertain-click classifier (currently uses `approach_corrections` as proxy).
+- [ ] **Native app long-term baselines**: Persistent per-user profiles in native storage open up calibrated confidence scoring -- each user's own baseline as reference frame. See `i2lab/clicksense/` for commercial roadmap.

@@ -203,6 +203,28 @@ The strongest theoretical connection to ClickSense comes from the **response vig
 | Click biometrics | Click timing for identity | At click | Same signal, different purpose |
 | Cursor UX analytics | Movement patterns as engagement/frustration | Browsing session | Approach velocity, corrections |
 
+### mousetrap Tutorial (2025) — The Methodological Standard
+
+**Wulff, Kieslich, Henninger, Haslbeck & Schulte-Mecklenbeck (2025).** "Movement tracking of psychological processes: A tutorial using mousetrap." *Behavior Research Methods*, 57:307. doi:10.3758/s13428-025-02695-2
+
+The comprehensive tutorial for the mousetrap R package — currently the most complete analysis toolkit for movement-tracking data. Covers the full pipeline: data import, trajectory processing (rescaling, resampling, filtering), trajectory indices (curvature, complexity, temporal), type-based trajectory classification, and temporal dynamics analysis.
+
+Key findings relevant to ClickSense:
+
+1. **Trajectory indices are highly intercorrelated.** PCA shows 53% of variance explained by a single component. Curvature indices correlate r=.79-.99 within class. ClickSense doesn't need all measures — a focused set (MAD, initiation time, motor pauses, sample entropy) covers most signal.
+
+2. **Initiation time is ambiguous.** The relationship between initiation time and response competition is "mixed" — designs with time limits find initiation time less sensitive to competition. ClickSense's pre-click pause may share this ambiguity. The 316ms deliberative pause needs contextual interpretation, not a universal mapping to "conflict."
+
+3. **Type-based classification reveals trajectory heterogeneity.** Not all trajectories to the same target look alike — some are straight, some curved, some show change-of-mind reversals. Clustering trajectories by shape (via `mt_cluster`) can separate cognitive modes that aggregate indices collapse. ClickSense currently captures temporal dynamics (velocity, deceleration) but not trajectory types. Adding shape classification would give both views.
+
+4. **mousetrap-Web bridges JS capture to R analysis.** Henninger & Kieslich (in press) provide a JavaScript implementation for browser-based studies. ClickSense's JS capture could export data in mousetrap-compatible format, gaining access to the full R analysis pipeline without reimplementing it.
+
+5. **The continuous vs discrete debate matters.** Early work (Spivey 2005) assumed continuous evidence accumulation drives trajectory shape. Recent work (Wulff et al. 2019) shows discrete, intermittent influence. ClickSense's pause-before-commit signal supports the discrete view — there's a measurable gap between evaluation and motor commitment.
+
+**ClickSense connection:** mousetrap is where the analysis lives. ClickSense captures click-moment and approach dynamics in the browser at scale; mousetrap provides the statistical machinery to analyze them. The integration path: ClickSense exports trajectory data → mousetrap-compatible format → full R analysis pipeline. This is complementary, not competitive. mousetrap focuses on forced-choice lab paradigms; ClickSense operates in naturalistic browsing contexts.
+
+---
+
 ### ClickSense's Novel Contribution
 
 The literature reveals that:
@@ -243,5 +265,6 @@ The literature reveals that:
 - [Kieslich et al. 2019, Mouse-tracking practical guide](https://www.researchgate.net/publication/328644377_Mouse-tracking_A_practical_guide_to_implementation_and_analysis)
 - [Hehman et al. 2015, Advanced mouse-tracking analytics](https://journals.sagepub.com/doi/10.1177/1368430214538325)
 - [Rheem et al. 2017, Mind Over Mouse](https://www.researchgate.net/publication/320471876_Mind_Over_Mouse_The_Effect_of_Cognitive_Load_on_Mouse_Movement_Behavior)
+- [Wulff, Kieslich et al. 2025, mousetrap tutorial](https://doi.org/10.3758/s13428-025-02695-2)
 - [Yoon et al. 2018, Control of movement vigor and decision making during foraging](https://pmc.ncbi.nlm.nih.gov/articles/PMC9187114/)
 - [Grip force as cognitive window (Frontiers 2022)](https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.1026439/full)
