@@ -6,6 +6,14 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
     <script src="clicksense.js"></script>
+    <script>
+        !function(t,e){var o,n,p,l;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(l=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,l);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+        posthog.init('phc_cUZalkUiHgfuv7k5hPzhuLhYQkjUWOQBl82pdDgHAmZ', {
+            api_host: 'https://us.i.posthog.com',
+            person_profiles: 'identified_only',
+            persistence: 'memory'
+        });
+    </script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet">
     <style>
         .fixation { font-size: 50px; }
@@ -26,9 +34,20 @@
 <body></body>
 <script>
 
+// --- Session ID for grouping all trials from one run ---
+var sessionId = 'stroop_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
 // --- ClickSense setup ---
 var clicksenseData = [];
 var currentTrialMeta = null;
+
+// PostHog adapter: sends each click as 'stroop_click' with experiment metadata
+var posthogAdapter = ClickSenseLib.createPostHogAdapter(
+    window.posthog,
+    'stroop_click',  // distinct event name — filter in PostHog with event = 'stroop_click'
+    { experiment: 'stroop', session_id: sessionId }
+);
+
 var cs = new ClickSenseLib.ClickSense({
     enableApproachDynamics: true,
     onCapture: function(event) {
@@ -40,6 +59,18 @@ var cs = new ClickSenseLib.ClickSense({
             event.correct_position = currentTrialMeta.correct_position;
         }
         clicksenseData.push(event);
+
+        // Send to PostHog with trial-level properties
+        var phEvent = Object.assign({}, event);
+        if (currentTrialMeta) {
+            phEvent.stimulus_type = currentTrialMeta.stimulus_type;
+            phEvent.word = currentTrialMeta.word;
+            phEvent.color = currentTrialMeta.color;
+            phEvent.button_order = currentTrialMeta.button_order;
+            phEvent.correct_position = currentTrialMeta.correct_position;
+        }
+        posthogAdapter(phEvent);
+
         console.log('ClickSense:', event.duration_ms + 'ms', event);
     }
 });
@@ -157,6 +188,27 @@ var jsPsych = initJsPsych({
         }
 
         html += '<p style="margin-top:20px; color:#666">Full trial + clicksense data in console.</p></div>';
+
+        // Send summary event to PostHog
+        if (window.posthog) {
+            var summary = { experiment: 'stroop', session_id: sessionId, total_trials: 54 };
+            ['congruent', 'incongruent', 'unrelated'].forEach(function(type) {
+                var d = jsPsych.data.get().filter({stimulus_type: type});
+                summary[type + '_rt_mean'] = Math.round(d.select('rt').mean());
+                summary[type + '_accuracy'] = Math.round(100 * d.select('correct').mean());
+                var cs = clicksenseData.filter(function(e) { return e.stimulus_type === type; });
+                if (cs.length) {
+                    var durs = cs.map(function(e) { return e.duration_ms; });
+                    summary[type + '_hold_mean'] = Math.round(durs.reduce(function(a,b){return a+b;},0) / durs.length);
+                }
+            });
+            // Stroop effect (incongruent - congruent)
+            summary.stroop_effect_rt = summary.incongruent_rt_mean - summary.congruent_rt_mean;
+            if (summary.incongruent_hold_mean && summary.congruent_hold_mean) {
+                summary.stroop_effect_hold = summary.incongruent_hold_mean - summary.congruent_hold_mean;
+            }
+            posthog.capture('stroop_complete', summary);
+        }
 
         document.body.innerHTML = html;
         console.log('jsPsych data:', JSON.stringify(jsPsych.data.get().values(), null, 2));
