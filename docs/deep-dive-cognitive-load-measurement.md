@@ -17,8 +17,8 @@ Cognitive load measurement is the parent field that ClickSense implicitly belong
 | **Heart rate variability** | Physiological | Autonomic nervous system state | Beat-to-beat (~1Hz) | Chest strap / wrist sensor | Low |
 | **Galvanic skin response** | Physiological | Sympathetic arousal via skin conductance | Real-time (~4Hz) | Finger/wrist electrodes | Low |
 | **Dual-task RT** | Behavioral | Spare cognitive capacity | Per-probe (~every few seconds) | Secondary task apparatus | High (disrupts primary task) |
-| **Mouse/cursor dynamics** | Behavioral | Motor hesitation, trajectory conflict | Per-movement (~60Hz) | Standard mouse | None |
-| **ClickSense** | Behavioral | Commitment confidence / motor hesitation | Per-click (~1 event per action) | Standard mouse | None |
+| **Mouse/cursor dynamics** | Behavioral | Motor hesitation, trajectory conflict | Per-movement (~60Hz) | Mouse or touchscreen | None |
+| **ClickSense** | Behavioral | Commitment confidence / motor hesitation | Per-click (~1 event per action) | Mouse or touchscreen | None |
 
 ClickSense sits at the bottom of this table — the lowest-cost, lowest-intrusion, lowest-resolution method. That positioning is either a fatal weakness or a unique advantage, depending on context.
 
@@ -36,7 +36,7 @@ The [NASA Task Load Index](https://humansystems.arc.nasa.gov/groups/tlx/) is the
 
 1. **It's retrospective.** Administered after the task, it can't capture moment-to-moment workload variations. Users forget. Users confuse their perception of performance with their perception of effort.
 
-2. **"Mathematical meaninglessness."** [Bolton, Biltekoff, & Humphrey (2023)](https://www.sciencedirect.com/science/article/pii/S1071581925000722) argued that the aggregate NASA-TLX score is mathematically meaningless — the weighted combination of six ordinal scales produces a number that doesn't correspond to any coherent construct.
+2. **"Mathematical meaninglessness."** Bolton, Biltekoff, & Humphrey (2023) argued that the aggregate NASA-TLX score is mathematically meaningless — the weighted combination of six ordinal scales produces a number that doesn't correspond to any coherent construct.
 
 3. **Convergent validity failures in HCI.** A [2025 systematic review in the International Journal of Human-Computer Studies](https://www.sciencedirect.com/science/article/pii/S1071581925000722) found "evidence for a lack of convergent validity and sensitivity of MWL subjective scales in HCI tasks." The NASA-TLX may not measure what HCI researchers think it measures.
 

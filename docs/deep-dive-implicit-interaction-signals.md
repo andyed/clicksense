@@ -12,7 +12,7 @@ The field spans three major application areas:
 
 | Application | Goal | Key Signals | Maturity |
 |-------------|------|-------------|----------|
-| **Behavioral Biometrics** | Authentication & fraud detection | Mouse trajectory, keystroke cadence, click timing | Commercial ($4.9B projected market) |
+| **Behavioral Biometrics** | Authentication & fraud detection | Mouse trajectory, keystroke cadence, click timing | Commercial (growing market) |
 | **Cognitive State Inference** | Detect load, stress, fatigue, emotion | Mouse speed, idle time, click pressure, typing rhythm | Academic (2024-2025 research wave) |
 | **UX / Engagement Analytics** | Measure attention, intent, friction | Scroll depth, dwell time, hover patterns, click sequences | Industry standard (Hotjar, Amplitude, etc.) |
 
