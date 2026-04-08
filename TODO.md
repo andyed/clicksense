@@ -6,6 +6,8 @@
 - [ ] **mousetrap-compatible export**: Output ClickSense approach data in a format mousetrap-Web can import. This gives access to the full R analysis pipeline (mt_measures, mt_cluster, mt_map) without reimplementing it. See `docs/wulff-kieslich-2025-mousetrap-tutorial.pdf` for format specs.
 - [ ] **Sample entropy metric**: Add spatiotemporal disorder measure to approach dynamics. Currently not captured. Wulff et al. show it correlates moderately (r=.50-.54) with curvature indices but provides distinct signal about processing fluency.
 
+- [ ] **Mine `approach_linearity` for deliberation signal** — ClickSense already captures `approach_linearity = straightDist / approach_distance` (inverse of arc ratio), `approach_max_deviation` (lateral displacement), and `approach_trajectory_type` (straight/curved/reversal). The cross-repo `attentional-foraging` NB24 rebuild (2026-04-08) showed that retreat arc geometry on SERP results discriminates deferred (re-approached) from rejected cursor episodes (Mann-Whitney p = 8 × 10⁻⁴ on AdSERP, N = 731 retreats). The same primitive at the moment of click commitment should mark deliberated clicks. We have the data already in PostHog (117 events with approach data on the dashboard) — query it for `approach_trajectory_type='curved'` clicks and check whether they correlate with `duration_ms` (hold time as the existing deliberation proxy). Predicted: curved approaches → longer holds → debated commitment. If it holds, we have a continuous deliberation signal independent of hold duration. **No code changes needed** — just an analysis on existing fields.
+
 ## Logo & Branding
 
 - [ ] Generate logo candidates with Nano Banana 2 using prompts below
