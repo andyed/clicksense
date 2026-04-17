@@ -23,6 +23,15 @@ const DEFAULTS = {
   captureText: true,    // include truncated innerText of target
   textMaxLength: 80,    // truncate target text to this length
 
+  // Auto-label: extract aria-label, title, name, value, placeholder,
+  // all data-* attributes, a computed accessible name, and a short CSS path.
+  // Lets clicksense group meaningfully on pages that don't use data-clicksense.
+  autoLabel: true,
+
+  // How many ancestors to walk when building target.path
+  // (e.g. pathDepth: 3 might yield "div.controls > div > button.preset-btn").
+  pathDepth: 3,
+
   // Which buttons to track (0 = left, 1 = middle, 2 = right)
   buttons: [0],
 
@@ -530,6 +539,108 @@ export class ClickSense {
       }
     }
 
+    if (this._config.autoLabel) {
+      const aria = use.getAttribute('aria-label');
+      if (aria) info.aria_label = aria.substring(0, this._config.textMaxLength);
+
+      const title = use.getAttribute('title');
+      if (title) info.title = title.substring(0, this._config.textMaxLength);
+
+      // Form control attributes
+      if (use.name) info.name = String(use.name).substring(0, 80);
+      if (use.placeholder) info.placeholder = String(use.placeholder).substring(0, 80);
+      // <button value> and <input type="submit" value> are meaningful labels;
+      // skip text inputs where `value` is user-typed content.
+      if (use.tagName === 'BUTTON' && use.value) {
+        info.value = String(use.value).substring(0, 80);
+      } else if (use.tagName === 'INPUT' && /^(submit|button|reset)$/i.test(use.type) && use.value) {
+        info.value = String(use.value).substring(0, 80);
+      }
+
+      // All data-* attributes (app semantics already present: data-preset, data-mode, etc.)
+      const data = {};
+      const attrs = use.attributes;
+      for (let i = 0; i < attrs.length; i++) {
+        const attr = attrs[i];
+        if (attr.name.startsWith('data-') && attr.name !== 'data-clicksense') {
+          data[attr.name.slice(5)] = String(attr.value).substring(0, 80);
+        }
+      }
+      if (Object.keys(data).length > 0) info.data = data;
+
+      // Accessible-name fallback chain — single best label for queries
+      info.name_computed =
+        info.label ||
+        info.aria_label ||
+        info.id ||
+        info.value ||
+        info.text ||
+        info.title ||
+        info.placeholder ||
+        info.tag;
+
+      info.path = this._computePath(use, this._config.pathDepth);
+    }
+
     return info;
+  }
+
+  /**
+   * Short, reasonably stable CSS selector up to `depth` ancestors.
+   * Format: `tag#id.class[:nth-of-type(n)]` at each level, joined with ' > '.
+   * Skips the document root; stops on body/html.
+   */
+  _computePath(el, depth) {
+    if (!el || !el.tagName) return '';
+    const parts = [];
+    let cur = el;
+    let steps = 0;
+    const max = Math.max(0, depth | 0);
+
+    while (cur && cur.tagName && cur.tagName !== 'BODY' && cur.tagName !== 'HTML' && steps <= max) {
+      parts.unshift(this._selectorFor(cur));
+      cur = cur.parentElement;
+      steps++;
+    }
+    return parts.join(' > ');
+  }
+
+  _selectorFor(el) {
+    let sel = el.tagName.toLowerCase();
+    if (el.id) {
+      // IDs are globally unique; no need for more specificity
+      return sel + '#' + el.id;
+    }
+
+    // Filter utility-framework noise: skip classes starting with digits
+    // or containing unusual chars (Tailwind arbitrary values, etc.)
+    const classList = (el.className && typeof el.className === 'string')
+      ? el.className.trim().split(/\s+/)
+      : [];
+    const useful = classList
+      .filter((c) => c && /^[a-zA-Z_][\w-]*$/.test(c))
+      .slice(0, 2); // cap at 2 classes per level
+    if (useful.length > 0) sel += '.' + useful.join('.');
+
+    // Add :nth-of-type for disambiguation if siblings share tag
+    const parent = el.parentElement;
+    if (parent) {
+      let idx = 1;
+      let sawSibling = false;
+      for (let i = 0; i < parent.children.length; i++) {
+        const sib = parent.children[i];
+        if (sib === el) break;
+        if (sib.tagName === el.tagName) { idx++; sawSibling = true; }
+      }
+      // Also check for later siblings of same tag
+      if (!sawSibling) {
+        for (let i = 0; i < parent.children.length; i++) {
+          const sib = parent.children[i];
+          if (sib !== el && sib.tagName === el.tagName) { sawSibling = true; break; }
+        }
+      }
+      if (sawSibling) sel += ':nth-of-type(' + idx + ')';
+    }
+    return sel;
   }
 }

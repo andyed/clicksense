@@ -1,6 +1,6 @@
 {
   "name": "clicksense",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Mousedown→mouseup latency as cognitive load signal. Vendor-agnostic click confidence measurement.",
   "type": "module",
   "main": "dist/clicksense.js",

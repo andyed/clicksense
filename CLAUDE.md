@@ -44,10 +44,18 @@ Planned:
 
 ## Analysis
 
-- **PostHog SQL queries**: `queries/analysis.sql` — 8 HogQL queries (data inventory, duration distributions, per-user baselines, target breakdown, session drift, approach dynamics).
-- **Dashboard**: [Hold Duration × Approach Dynamics](https://us.posthog.com/project/258589/dashboard/1330450) — 117 events with approach data across 4 hold buckets.
-- **Key finding (Mar 2026)**: Deceleration is monotonic across hold buckets (-0.0011 → -0.0052). Deliberative clicks (120-160ms) show a 316ms pre-click pause — 2.4x other buckets — suggesting decision cost, not motor cost. Corrections peak in the "normal" bucket (12.0), not deliberative.
-- **Property names**: `duration_ms`, `click_x`, `click_y`, `drag_distance`, `input_type`, `target_tag`, `target_id`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`, `approach_linearity`, `approach_max_deviation`, `approach_trajectory_type`.
+- **PostHog SQL queries**: `queries/analysis.sql` — 16 HogQL queries (data inventory, duration distributions, per-user baselines, target breakdown, session drift, approach dynamics, touch vs mouse, hyperlink/any-target deltas from baseline).
+- **Dashboards**:
+  - Scrutinizer project (258589): [Hold Duration × Approach Dynamics](https://us.posthog.com/project/258589/dashboard/1330450) (117 events, Mar 2026 baseline).
+  - Psychodeli project: primary production dataset (n=2,917 as of 2026-04-17 — 25× the Scrutinizer sample).
+- **Key findings (Psychodeli, 2026-04-17, n=2,917)**:
+  - Deceleration monotonic across hold buckets (-0.0012 → -0.0074). Holds and steepens vs Mar.
+  - Velocity monotonic with hold bucket (0.62 → 1.02 mean, 0.35 → 0.52 median). *New.*
+  - Distance monotonic with hold bucket (200 → 239 px). *New.*
+  - Corrections peak in "normal" bucket (12.23). Holds.
+  - Pre-click pause is flat at 123-128 ms for ballistic/normal/deliberative; only "extended" (>160 ms) jumps to 189 ms. **The Mar "316 ms deliberative pause, 2.4× other buckets" finding does NOT replicate at n=2,917.**
+- **Property names** (v0.1 core): `duration_ms`, `click_x`, `click_y`, `drag_distance`, `input_type`, `target_tag`, `target_id`, `target_label`, `target_classes`, `target_href`, `target_text`, `approach_velocity_mean`, `approach_velocity_final`, `approach_deceleration`, `approach_corrections`, `approach_distance`, `approach_pause_ms`, `approach_linearity`, `approach_max_deviation`, `approach_trajectory_type`.
+- **Property names** (v0.2 autoLabel, 2026-04-17): `target_aria_label`, `target_title`, `target_name_attr`, `target_value`, `target_placeholder`, `target_name` (computed accessible name), `target_path` (short CSS selector, depth configurable), plus `target_data_<key>` for every `data-*` attribute on the element (e.g. `target_data_preset`, `target_data_mode`). Default `pathDepth: 3`.
 
 ## Research Data
 

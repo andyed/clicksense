@@ -526,7 +526,91 @@ ORDER BY drag_px
 
 
 -- ============================================================================
--- QUERY 14: Touch Session Drift
+-- QUERY 14: Hyperlink Deltas From Baseline
+-- ============================================================================
+-- Ranks hyperlinks by how far their median hold duration deviates from the
+-- overall baseline. Positive delta = hesitation / lower confidence. Negative
+-- delta = confident / habitual clicks. Use z-score column for SD-normalized
+-- comparison across sites with different baselines.
+--
+-- Grouping key is target_href (always present on <a>). Displays the best
+-- available label from data-clicksense, aria-label, id, text, or href.
+
+WITH overall AS (
+    SELECT quantile(0.50)(properties.duration_ms) AS baseline_ms,
+           stddevPop(properties.duration_ms)       AS baseline_sd
+    FROM events
+    WHERE event = 'click_confidence'
+      AND properties.duration_ms IS NOT NULL
+)
+SELECT
+    properties.target_href                                       AS href,
+    any(coalesce(properties.target_name,      -- v0.2+ computed name
+                 properties.target_label,
+                 properties.target_aria_label,
+                 properties.target_text,
+                 properties.target_id,
+                 properties.target_href))                        AS label,
+    count()                                                      AS clicks,
+    round(quantile(0.50)(properties.duration_ms), 1)             AS median_ms,
+    round(avg(properties.duration_ms), 1)                        AS mean_ms,
+    round(quantile(0.50)(properties.duration_ms) - (SELECT baseline_ms FROM overall), 1)
+                                                                 AS delta_ms,
+    round((quantile(0.50)(properties.duration_ms) - (SELECT baseline_ms FROM overall))
+          / nullIf((SELECT baseline_sd FROM overall), 0), 2)     AS delta_z,
+    round(avg(properties.approach_pause_ms), 0)                  AS avg_pause_ms,
+    round(avg(properties.approach_corrections), 2)               AS avg_corrections,
+    round(avg(properties.approach_linearity), 3)                 AS avg_linearity
+FROM events
+WHERE event = 'click_confidence'
+  AND properties.duration_ms IS NOT NULL
+  AND properties.target_href IS NOT NULL
+GROUP BY href
+HAVING clicks >= 3
+ORDER BY abs(delta_ms) DESC
+LIMIT 50
+
+
+-- ============================================================================
+-- QUERY 15: Any-Target Deltas From Baseline (v0.2+, requires target_name)
+-- ============================================================================
+-- Same as Query 14 but groups by target_name (computed accessible name from
+-- clicksense v0.2 autoLabel). Covers buttons, inputs, and ARIA-labeled
+-- elements — not just hyperlinks. Use this once v0.2 data has accumulated.
+--
+-- target_path is a fallback CSS selector for elements with no name signal.
+
+WITH overall AS (
+    SELECT quantile(0.50)(properties.duration_ms) AS baseline_ms,
+           stddevPop(properties.duration_ms)       AS baseline_sd
+    FROM events
+    WHERE event = 'click_confidence'
+      AND properties.duration_ms IS NOT NULL
+)
+SELECT
+    coalesce(properties.target_name, properties.target_path)     AS label,
+    any(properties.target_tag)                                   AS tag,
+    any(properties.target_path)                                  AS path,
+    count()                                                      AS clicks,
+    round(quantile(0.50)(properties.duration_ms), 1)             AS median_ms,
+    round(quantile(0.50)(properties.duration_ms) - (SELECT baseline_ms FROM overall), 1)
+                                                                 AS delta_ms,
+    round((quantile(0.50)(properties.duration_ms) - (SELECT baseline_ms FROM overall))
+          / nullIf((SELECT baseline_sd FROM overall), 0), 2)     AS delta_z,
+    round(avg(properties.approach_pause_ms), 0)                  AS avg_pause_ms,
+    round(avg(properties.approach_corrections), 2)               AS avg_corrections
+FROM events
+WHERE event = 'click_confidence'
+  AND properties.duration_ms IS NOT NULL
+  AND (properties.target_name IS NOT NULL OR properties.target_path IS NOT NULL)
+GROUP BY label
+HAVING clicks >= 5
+ORDER BY abs(delta_ms) DESC
+LIMIT 50
+
+
+-- ============================================================================
+-- QUERY 16: Touch Session Drift
 -- ============================================================================
 -- Same as Query 5 but for touch sessions. Does tap duration change over
 -- a mobile session? Mobile fatigue patterns may differ from desktop.

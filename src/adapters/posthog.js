@@ -43,6 +43,24 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
     if (event.target.href) props.target_href = event.target.href;
     if (event.target.text) props.target_text = event.target.text;
 
+    // Auto-label fields (when clicksense has autoLabel enabled)
+    if (event.target.aria_label) props.target_aria_label = event.target.aria_label;
+    if (event.target.title) props.target_title = event.target.title;
+    if (event.target.name) props.target_name_attr = event.target.name;
+    if (event.target.value) props.target_value = event.target.value;
+    if (event.target.placeholder) props.target_placeholder = event.target.placeholder;
+    if (event.target.name_computed) props.target_name = event.target.name_computed;
+    if (event.target.path) props.target_path = event.target.path;
+
+    // data-* attributes: flatten as target_data_<key>
+    if (event.target.data) {
+      for (const key in event.target.data) {
+        // PostHog property names must be simple; keep this conservative.
+        const clean = key.replace(/[^a-zA-Z0-9_-]/g, '_');
+        props['target_data_' + clean] = event.target.data[key];
+      }
+    }
+
     // Flatten approach dynamics into top-level properties for PostHog filtering.
     // These are only present when enableApproachDynamics is true.
     if (event.approach) {
