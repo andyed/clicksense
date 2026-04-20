@@ -1,5 +1,9 @@
 # ClickSense TODO
 
+## Site / Privacy
+
+- [ ] **Data policy on experiments landing page** — `andyed.github.io/clicksense/` (the `experiments/index.html` served as gh-pages root) currently offers experiments that capture behavioral data and forward to PostHog with no visible policy. Needed: a short, plain-language statement on what is captured (click timing, cursor position, approach dynamics, trial metadata — no cookies, no localStorage, memory-only PostHog persistence, no identifiable info, session IDs are per-run and not linked across visits), what it's used for (aggregate behavioral-science research, published in open form, no commercial use), and an acknowledgement flow (explicit "Start" button that implies consent, linked to the policy text). Should live as a footer/intro block on the experiments landing page and be reused on each experiment's intro screen. Mirror the style of MBP's existing analytics disclosure if there is one.
+
 ## Analysis & Methodology
 
 - [ ] **Pull peripheral-task data from PostHog** — the `peripheral_click` + `peripheral_complete` events are flowing from `experiments/peripheral/`. Key fields: `session_id` groups trials, `target_color` × `target_ecc` are the factors, `duration_ms` is hold time, `trial_rt_ms` is stimulus-onset RT, `click_error_px` is motor accuracy, plus full approach dynamics. Aggregate across participants to test whether the predicted cyan × far advantage replicates once single-subject noise washes out. Target N: ≥ 20 participants (~540 target-click events, ~60 per cell). Script belongs in `queries/` alongside Stroop + Psychodeli queries. Filter on `phase = 'target'` to exclude fixation clicks.
