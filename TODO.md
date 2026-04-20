@@ -2,6 +2,8 @@
 
 ## Analysis & Methodology
 
+- [ ] **Pull peripheral-task data from PostHog** — the `peripheral_click` + `peripheral_complete` events are flowing from `experiments/peripheral/`. Key fields: `session_id` groups trials, `target_color` × `target_ecc` are the factors, `duration_ms` is hold time, `trial_rt_ms` is stimulus-onset RT, `click_error_px` is motor accuracy, plus full approach dynamics. Aggregate across participants to test whether the predicted cyan × far advantage replicates once single-subject noise washes out. Target N: ≥ 20 participants (~540 target-click events, ~60 per cell). Script belongs in `queries/` alongside Stroop + Psychodeli queries. Filter on `phase = 'target'` to exclude fixation clicks.
+
 - [ ] **Trajectory shape classification**: ClickSense currently captures temporal dynamics (velocity, deceleration, corrections) but not trajectory types. Adding shape classification (straight, curved, change-of-mind) would give both the temporal-dynamics and type-based views described in Wulff et al. (2025). Options: implement `mt_cluster`-style k-means on trajectory shapes in JS, or export mousetrap-compatible data format and classify in R.
 - [ ] **mousetrap-compatible export**: Output ClickSense approach data in a format mousetrap-Web can import. This gives access to the full R analysis pipeline (mt_measures, mt_cluster, mt_map) without reimplementing it. See `docs/wulff-kieslich-2025-mousetrap-tutorial.pdf` for format specs.
 - [ ] **Sample entropy metric**: Add spatiotemporal disorder measure to approach dynamics. Currently not captured. Wulff et al. show it correlates moderately (r=.50-.54) with curvature indices but provides distinct signal about processing fluency.
