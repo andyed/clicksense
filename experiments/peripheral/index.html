@@ -417,18 +417,12 @@ function onCanvasClick(e) {
     var hit = d2 <= TARGET_RADIUS + CLICK_HIT_TOLERANCE;
     clearTimeout(timerId);
 
-    currentTrialMeta = {
-      target_color: trial.color,
-      target_ecc: trial.ecc,
-      target_ecc_px: Math.round(halfMin * trial.ecc_frac),
-      target_angle_deg: Math.round(trial.angle_deg),
-      target_x: Math.round(targetPos.x),
-      target_y: Math.round(targetPos.y),
-      trial_rt_ms: Math.round(rt),
-      click_error_px: Math.round(d2),
-      was_hit: hit,
-      trial_index: currentTrialIdx,
-    };
+    // currentTrialMeta was set in showTarget() so ClickSense's onCapture
+    // (which fires on mouseup, BEFORE the DOM click event) already saw the
+    // trial context. Enrich with click-dependent fields for trialResults.
+    currentTrialMeta.trial_rt_ms = Math.round(rt);
+    currentTrialMeta.click_error_px = Math.round(d2);
+    currentTrialMeta.was_hit = hit;
 
     trialResults.push(Object.assign({}, currentTrialMeta));
 
@@ -459,26 +453,31 @@ function showTarget() {
     targetPos = targetPosForTrial(trial);
   }
   targetShownAt = performance.now();
+
+  // Set currentTrialMeta BEFORE target is clickable so the ClickSense
+  // onCapture callback (fires on mouseup, before the DOM click event) has
+  // the trial context attached to its event.
+  currentTrialMeta = {
+    phase: 'target',
+    target_color: trial.color,
+    target_ecc: trial.ecc,
+    target_ecc_px: Math.round(halfMin * trial.ecc_frac),
+    target_angle_deg: Math.round(trial.angle_deg),
+    target_x: Math.round(targetPos.x),
+    target_y: Math.round(targetPos.y),
+    trial_index: currentTrialIdx,
+  };
+
   state = 'target_visible';
   render();
   // Timeout if user doesn't click within MAX_VISIBLE_MS
   timerId = setTimeout(function() {
     if (state === 'target_visible') {
-      // Record miss (timeout)
-      var trial = trials[currentTrialIdx];
-      currentTrialMeta = {
-        target_color: trial.color,
-        target_ecc: trial.ecc,
-        target_ecc_px: Math.round(halfMin * trial.ecc_frac),
-        target_angle_deg: Math.round(trial.angle_deg),
-        target_x: Math.round(targetPos.x),
-        target_y: Math.round(targetPos.y),
-        trial_rt_ms: null,
-        click_error_px: null,
-        was_hit: false,
-        trial_index: currentTrialIdx,
-        timed_out: true,
-      };
+      // Record miss (timeout) — enrich the meta that was set in showTarget.
+      currentTrialMeta.trial_rt_ms = null;
+      currentTrialMeta.click_error_px = null;
+      currentTrialMeta.was_hit = false;
+      currentTrialMeta.timed_out = true;
       trialResults.push(Object.assign({}, currentTrialMeta));
       state = 'iti';
       setTimeout(function() {
