@@ -1,0 +1,551 @@
+<!doctype html>
+<html>
+<head>
+  <title>Peripheral Color Task — ClickSense</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <script src="clicksense.js"></script>
+  <script>
+    !function(t,e){var o,n,p,l;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(l=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,l);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_NCpTo2Gg48Uk7jEQ0udxLL9TEvMuWvzqqjo1h6Q9Upz', {
+      api_host: 'https://us.i.posthog.com',
+      person_profiles: 'identified_only',
+      persistence: 'memory'
+    });
+  </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: rgb(10, 10, 15); color: rgb(228, 228, 216); font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
+    body { display: flex; align-items: center; justify-content: center; }
+    #stage { position: fixed; inset: 0; cursor: none; }
+    #cursor { position: fixed; width: 24px; height: 24px; pointer-events: none; z-index: 200;
+              transform: translate(-4px, -4px); display: none; }
+    #intro, #results { max-width: 700px; padding: 2rem; line-height: 1.7; overflow-y: auto;
+                       max-height: 100vh; cursor: auto; }
+    #intro h1, #results h1 { font-size: 1.5rem; margin-bottom: 1rem; letter-spacing: -0.01em; }
+    #intro h2, #results h2 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: rgb(80, 180, 200); }
+    #intro p, #results p { margin-bottom: 1rem; }
+    #intro ul { margin: 0 0 1rem 1.5rem; } #intro li { margin-bottom: 0.4rem; }
+    .btn { display: inline-block; padding: 10px 24px; background: rgb(80, 180, 200); color: rgb(10, 10, 15);
+           border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer;
+           text-decoration: none; margin-top: 1rem; }
+    .btn:hover { background: rgb(125, 212, 224); }
+    .tight { font-family: ui-monospace, Menlo, monospace; font-size: 0.82rem;
+             background: rgba(80, 180, 200, 0.08); padding: 0.1em 0.35em; border-radius: 3px;
+             color: rgb(200, 232, 238); }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { padding: 6px 10px; border-bottom: 1px solid rgb(40, 40, 45); text-align: right; }
+    th { border-bottom: 2px solid rgb(80, 180, 200); color: rgb(210, 210, 200); text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+              vertical-align: middle; margin-right: 6px; }
+    .footer-bar { position: fixed; bottom: 8px; right: 12px; font-size: 0.72rem;
+                  color: rgb(120, 120, 125); font-family: ui-monospace, monospace; z-index: 50; }
+    .counter { position: fixed; top: 8px; right: 12px; font-size: 0.72rem;
+               color: rgb(120, 120, 125); font-family: ui-monospace, monospace; z-index: 50; }
+  </style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <h1>Peripheral Color Task</h1>
+  <p>Targets appear in your peripheral vision. Click them as quickly as you can, in the color that appears. Between trials, keep your eyes on the <span class="tight">+</span> at the screen center.</p>
+
+  <h2>What this measures</h2>
+  <p>Red-green (L-M) cone opponency collapses in the periphery; blue-yellow (S-cone) opponency persists. Cyan sits near the photopic luminance peak and engages the S-cone pathway. So — in theory — a cyan target at 20° eccentricity should be easier to detect than a red one.</p>
+  <p>Your reaction times (stimulus onset → mousedown), click accuracy, and ClickSense motor dynamics (approach trajectory + hold duration) will be compared across target color × eccentricity. You'll see your own results at the end.</p>
+
+  <h2>The trial</h2>
+  <ol style="margin-left: 1.5rem; margin-bottom: 1rem;">
+    <li>Look at the <span class="tight">+</span> in the center. Move your cursor there.</li>
+    <li>Click the <span class="tight">+</span> to start the trial.</li>
+    <li>A colored target appears somewhere on-screen. Click it.</li>
+    <li>Keep looking at the center until you click the target.</li>
+  </ol>
+  <p>54 trials. About 6 minutes. No breaks.</p>
+
+  <h2>Data</h2>
+  <p>Each click is sent anonymously to PostHog as a <span class="tight">peripheral_click</span> event for the research dataset. Trial conditions (target color, eccentricity, hemifield, reaction time, click error) are attached. No identifiable information is captured.</p>
+
+  <button class="btn" onclick="startExperiment()">Start</button>
+  <p style="margin-top: 2rem; font-size: 0.82rem; color: rgb(140, 140, 150);">
+    Part of <a href="/clicksense/" style="color: rgb(80, 180, 200);">ClickSense</a>. Background:
+    <a href="https://andyed.github.io/scrutinizer-www/drafts/peripheral-color-draft.html" style="color: rgb(80, 180, 200);">Peripheral Color — What Designers Don't Know About Red</a>.
+  </p>
+</div>
+
+<canvas id="stage" style="display:none"></canvas>
+<div id="cursor"><svg viewBox="0 0 24 24" width="24" height="24"><polygon points="0,0 12,12 6,12 8,20 6,21 4,13 0,13" fill="rgb(228,228,216)" stroke="rgb(10,10,15)" stroke-width="1"/></svg></div>
+<div class="counter" id="counter"></div>
+<div class="footer-bar">clicksense · peripheral v1</div>
+
+<!-- RESULTS -->
+<div id="results" style="display:none"></div>
+
+<script>
+// ============================================================================
+//   CONFIG
+// ============================================================================
+
+var sessionId = 'peripheral_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+var isTouchDevice = 'ontouchstart' in window;
+
+// Colors: matched-ish saturation on dark bg. NOT equiluminant — the whole point
+// is that L-M vs S-cone pathways differ in peripheral persistence, and chasing
+// equiluminance on uncalibrated displays would eat the naturalistic effect.
+var COLORS = {
+  red:   'rgb(230, 70, 70)',
+  green: 'rgb(60, 200, 80)',
+  cyan:  'rgb(80, 180, 200)',
+};
+
+// Eccentricities as a fraction of min(half-viewport) so the 3° / 10° / 20°
+// rough intent scales to the user's actual screen.
+var ECC_FRACS = { near: 0.22, mid: 0.45, far: 0.68 };
+
+var TARGET_RADIUS = 22;    // px — reasonable Fitts target at all eccs
+var FIXATION_RADIUS = 14;  // px — click-to-start region
+var POST_FIXATION_DELAY_MIN = 400;   // ms
+var POST_FIXATION_DELAY_MAX = 800;   // ms
+var TARGET_MAX_VISIBLE_MS = 2500;    // ms — timeout if user doesn't find it
+var FEEDBACK_FLASH_MS = 160;         // ms — brief color flash on hit
+var ITI_MS = 600;                    // ms — inter-trial interval
+var CLICK_HIT_TOLERANCE = 12;        // px — generous beyond target radius
+var REPS_PER_CELL = 6;               // 3 × 3 × 6 = 54 trials
+
+// ============================================================================
+//   STATE
+// ============================================================================
+
+var trials = [];
+var currentTrialIdx = 0;
+var currentTrialMeta = null;
+var trialResults = [];
+var clicksenseData = [];
+var state = 'intro';   // intro | fixation | waiting_for_target | target_visible | iti | results
+var targetShownAt = 0;
+var targetPos = null;
+var timerId = null;
+
+var canvas = document.getElementById('stage');
+var ctx;
+var cursorEl = document.getElementById('cursor');
+var counterEl = document.getElementById('counter');
+var centerX, centerY, halfMin;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  centerX = canvas.width / 2;
+  centerY = canvas.height / 2;
+  halfMin = Math.min(canvas.width, canvas.height) / 2;
+  ctx = canvas.getContext('2d');
+  if (state !== 'intro' && state !== 'results') render();
+}
+window.addEventListener('resize', resize);
+
+// ============================================================================
+//   TRIAL GENERATION
+// ============================================================================
+
+function generateTrials() {
+  var all = [];
+  var colorKeys = Object.keys(COLORS);
+  var eccKeys = Object.keys(ECC_FRACS);
+  for (var i = 0; i < REPS_PER_CELL; i++) {
+    colorKeys.forEach(function(c) {
+      eccKeys.forEach(function(e) {
+        all.push({
+          color: c,
+          color_css: COLORS[c],
+          ecc: e,
+          ecc_frac: ECC_FRACS[e],
+          rep: i,
+          // Random angle around center; bias toward horizontal (realistic
+          // nav-bar / sidebar eccentricities). Distribute across 4 quadrants.
+          angle_deg: (Math.random() * 360),
+        });
+      });
+    });
+  }
+  // Shuffle
+  for (var j = all.length - 1; j > 0; j--) {
+    var k = Math.floor(Math.random() * (j + 1));
+    var tmp = all[j]; all[j] = all[k]; all[k] = tmp;
+  }
+  return all;
+}
+
+function targetPosForTrial(trial) {
+  var r = Math.round(halfMin * trial.ecc_frac);
+  var rad = trial.angle_deg * Math.PI / 180;
+  return {
+    x: centerX + r * Math.cos(rad),
+    y: centerY + r * Math.sin(rad),
+    r_px: r,
+  };
+}
+
+// ============================================================================
+//   CLICKSENSE
+// ============================================================================
+
+var posthogAdapter = ClickSenseLib.createPostHogAdapter(
+  window.posthog,
+  'peripheral_click',
+  { experiment: 'peripheral', session_id: sessionId }
+);
+
+var cs = new ClickSenseLib.ClickSense({
+  enableApproachDynamics: true,
+  onCapture: function(event) {
+    if (currentTrialMeta) {
+      event.target_color = currentTrialMeta.target_color;
+      event.target_ecc = currentTrialMeta.target_ecc;
+      event.target_ecc_px = currentTrialMeta.target_ecc_px;
+      event.target_angle_deg = currentTrialMeta.target_angle_deg;
+      event.target_x = currentTrialMeta.target_x;
+      event.target_y = currentTrialMeta.target_y;
+      event.trial_rt_ms = currentTrialMeta.trial_rt_ms;
+      event.click_error_px = currentTrialMeta.click_error_px;
+      event.was_hit = currentTrialMeta.was_hit;
+      event.trial_index = currentTrialMeta.trial_index;
+    }
+    clicksenseData.push(event);
+    var phEvent = Object.assign({}, event);
+    if (currentTrialMeta) Object.assign(phEvent, {
+      target_color: currentTrialMeta.target_color,
+      target_ecc: currentTrialMeta.target_ecc,
+      target_ecc_px: currentTrialMeta.target_ecc_px,
+      target_angle_deg: currentTrialMeta.target_angle_deg,
+      trial_rt_ms: currentTrialMeta.trial_rt_ms,
+      click_error_px: currentTrialMeta.click_error_px,
+      was_hit: currentTrialMeta.was_hit,
+      trial_index: currentTrialMeta.trial_index,
+    });
+    posthogAdapter(phEvent);
+  }
+});
+
+// ============================================================================
+//   RENDER
+// ============================================================================
+
+function drawFixation() {
+  ctx.strokeStyle = 'rgb(210, 210, 200)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 10, centerY);
+  ctx.lineTo(centerX + 10, centerY);
+  ctx.moveTo(centerX, centerY - 10);
+  ctx.lineTo(centerX, centerY + 10);
+  ctx.stroke();
+  // Ring around fixation to indicate clickable
+  ctx.strokeStyle = 'rgb(110, 175, 255)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, FIXATION_RADIUS, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawTarget(pos, color, flash) {
+  ctx.fillStyle = flash ? 'rgb(228, 228, 216)' : color;
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, TARGET_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMiniFixation() {
+  // During target-visible and waiting phases, keep a small fixation marker
+  // visible so users can refocus gaze between trials without losing anchor.
+  ctx.strokeStyle = 'rgb(120, 120, 130)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 6, centerY);
+  ctx.lineTo(centerX + 6, centerY);
+  ctx.moveTo(centerX, centerY - 6);
+  ctx.lineTo(centerX, centerY + 6);
+  ctx.stroke();
+}
+
+function render() {
+  ctx.fillStyle = 'rgb(10, 10, 15)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  if (state === 'fixation') {
+    drawFixation();
+  } else if (state === 'waiting_for_target') {
+    drawFixation();
+  } else if (state === 'target_visible') {
+    drawMiniFixation();
+    drawTarget(targetPos, trials[currentTrialIdx].color_css);
+  } else if (state === 'iti') {
+    drawMiniFixation();
+  }
+
+  // Counter update
+  counterEl.textContent = 'trial ' + Math.min(currentTrialIdx + 1, trials.length) + ' / ' + trials.length;
+}
+
+// ============================================================================
+//   CUSTOM CURSOR (so users see their mouse even when we hide native one)
+// ============================================================================
+
+window.addEventListener('mousemove', function(e) {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top = e.clientY + 'px';
+});
+
+// ============================================================================
+//   TRIAL FLOW
+// ============================================================================
+
+function startExperiment() {
+  document.getElementById('intro').style.display = 'none';
+  canvas.style.display = 'block';
+  cursorEl.style.display = 'block';
+  resize();
+  trials = generateTrials();
+  currentTrialIdx = 0;
+  nextTrial();
+}
+
+function nextTrial() {
+  if (currentTrialIdx >= trials.length) {
+    finishExperiment();
+    return;
+  }
+  state = 'fixation';
+  currentTrialMeta = null;
+  render();
+}
+
+function onCanvasClick(e) {
+  var x = e.clientX;
+  var y = e.clientY;
+
+  if (state === 'fixation') {
+    // Accept click only if near fixation
+    var d = Math.hypot(x - centerX, y - centerY);
+    if (d <= FIXATION_RADIUS + 6) {
+      state = 'waiting_for_target';
+      render();
+      var delay = POST_FIXATION_DELAY_MIN +
+                  Math.random() * (POST_FIXATION_DELAY_MAX - POST_FIXATION_DELAY_MIN);
+      timerId = setTimeout(showTarget, delay);
+    }
+  } else if (state === 'target_visible') {
+    var trial = trials[currentTrialIdx];
+    var rt = performance.now() - targetShownAt;
+    var d2 = Math.hypot(x - targetPos.x, y - targetPos.y);
+    var hit = d2 <= TARGET_RADIUS + CLICK_HIT_TOLERANCE;
+    clearTimeout(timerId);
+
+    currentTrialMeta = {
+      target_color: trial.color,
+      target_ecc: trial.ecc,
+      target_ecc_px: Math.round(halfMin * trial.ecc_frac),
+      target_angle_deg: Math.round(trial.angle_deg),
+      target_x: Math.round(targetPos.x),
+      target_y: Math.round(targetPos.y),
+      trial_rt_ms: Math.round(rt),
+      click_error_px: Math.round(d2),
+      was_hit: hit,
+      trial_index: currentTrialIdx,
+    };
+
+    trialResults.push(Object.assign({}, currentTrialMeta));
+
+    // Brief feedback flash for hits, then ITI
+    if (hit) {
+      drawTarget(targetPos, trial.color_css, /*flash*/ true);
+    }
+    state = 'iti';
+    setTimeout(function() {
+      currentTrialIdx++;
+      render();
+      setTimeout(nextTrial, 50);
+    }, ITI_MS);
+  }
+}
+window.addEventListener('click', onCanvasClick, true);
+
+function showTarget() {
+  if (state !== 'waiting_for_target') return;
+  var trial = trials[currentTrialIdx];
+  targetPos = targetPosForTrial(trial);
+  // Keep target fully inside viewport by clamping — if near an edge, reflect angle.
+  var pad = TARGET_RADIUS + 12;
+  if (targetPos.x < pad || targetPos.x > canvas.width - pad ||
+      targetPos.y < pad || targetPos.y > canvas.height - pad) {
+    // Reflect angle: flip 180°
+    trial.angle_deg = (trial.angle_deg + 180) % 360;
+    targetPos = targetPosForTrial(trial);
+  }
+  targetShownAt = performance.now();
+  state = 'target_visible';
+  render();
+  // Timeout if user doesn't click within MAX_VISIBLE_MS
+  timerId = setTimeout(function() {
+    if (state === 'target_visible') {
+      // Record miss (timeout)
+      var trial = trials[currentTrialIdx];
+      currentTrialMeta = {
+        target_color: trial.color,
+        target_ecc: trial.ecc,
+        target_ecc_px: Math.round(halfMin * trial.ecc_frac),
+        target_angle_deg: Math.round(trial.angle_deg),
+        target_x: Math.round(targetPos.x),
+        target_y: Math.round(targetPos.y),
+        trial_rt_ms: null,
+        click_error_px: null,
+        was_hit: false,
+        trial_index: currentTrialIdx,
+        timed_out: true,
+      };
+      trialResults.push(Object.assign({}, currentTrialMeta));
+      state = 'iti';
+      setTimeout(function() {
+        currentTrialIdx++;
+        render();
+        setTimeout(nextTrial, 50);
+      }, 400);
+    }
+  }, TARGET_MAX_VISIBLE_MS);
+}
+
+// ============================================================================
+//   RESULTS
+// ============================================================================
+
+function mean(arr) {
+  var valid = arr.filter(function(v) { return typeof v === 'number' && isFinite(v); });
+  if (!valid.length) return NaN;
+  return valid.reduce(function(a, b) { return a + b; }, 0) / valid.length;
+}
+
+function finishExperiment() {
+  state = 'results';
+  canvas.style.display = 'none';
+  cursorEl.style.display = 'none';
+  counterEl.style.display = 'none';
+
+  var results = document.getElementById('results');
+  results.style.display = 'block';
+
+  // Aggregate: RT and was_hit by color × ecc
+  var agg = {};
+  trialResults.forEach(function(t) {
+    var key = t.target_color + ':' + t.target_ecc;
+    if (!agg[key]) agg[key] = { rts: [], hits: 0, total: 0, errors: [] };
+    agg[key].total++;
+    if (t.was_hit) agg[key].hits++;
+    if (t.trial_rt_ms != null) agg[key].rts.push(t.trial_rt_ms);
+    if (t.click_error_px != null) agg[key].errors.push(t.click_error_px);
+  });
+
+  // ClickSense: hold duration by color × ecc
+  var csAgg = {};
+  clicksenseData.forEach(function(e) {
+    if (!e.target_color || !e.target_ecc) return;
+    var key = e.target_color + ':' + e.target_ecc;
+    if (!csAgg[key]) csAgg[key] = { holds: [], dists: [], vels: [] };
+    csAgg[key].holds.push(e.duration_ms);
+    if (e.approach) {
+      if (e.approach.approach_distance != null) csAgg[key].dists.push(e.approach.approach_distance);
+      if (e.approach.approach_velocity_mean != null) csAgg[key].vels.push(e.approach.approach_velocity_mean);
+    }
+  });
+
+  var html = '<h1>Your Results</h1>';
+  html += '<p>' + trialResults.length + ' trials, ' +
+          trialResults.filter(function(t) { return t.was_hit; }).length + ' hits.</p>';
+
+  // RT × Color × Eccentricity table
+  html += '<h2>Reaction Time (ms) &mdash; stimulus onset to mousedown</h2>';
+  html += '<p style="font-size:0.85rem; color:rgb(170,170,175)">If the Scrutinizer peripheral-color theory holds for you, cyan in the far column should be as fast as near, while red in the far column should be the slowest cell.</p>';
+  html += '<table><tr><th>Color</th><th>Near</th><th>Mid</th><th>Far</th></tr>';
+  ['red', 'green', 'cyan'].forEach(function(c) {
+    html += '<tr><td><span class="swatch" style="background:' + COLORS[c] + '"></span>' + c + '</td>';
+    ['near', 'mid', 'far'].forEach(function(e) {
+      var a = agg[c + ':' + e];
+      var m = a ? mean(a.rts) : NaN;
+      html += '<td>' + (isFinite(m) ? Math.round(m) : '—') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+
+  // Accuracy × Color × Eccentricity
+  html += '<h2>Hit Rate</h2>';
+  html += '<table><tr><th>Color</th><th>Near</th><th>Mid</th><th>Far</th></tr>';
+  ['red', 'green', 'cyan'].forEach(function(c) {
+    html += '<tr><td><span class="swatch" style="background:' + COLORS[c] + '"></span>' + c + '</td>';
+    ['near', 'mid', 'far'].forEach(function(e) {
+      var a = agg[c + ':' + e];
+      var pct = a && a.total > 0 ? Math.round(100 * a.hits / a.total) : null;
+      html += '<td>' + (pct != null ? pct + '%' : '—') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+
+  // Click error (motor accuracy — distance from target center)
+  html += '<h2>Click Error (px from target center)</h2>';
+  html += '<p style="font-size:0.85rem; color:rgb(170,170,175)">How close to the target your clicks landed. Bigger numbers in peripheral columns indicate cursor aim suffered at that eccentricity × color.</p>';
+  html += '<table><tr><th>Color</th><th>Near</th><th>Mid</th><th>Far</th></tr>';
+  ['red', 'green', 'cyan'].forEach(function(c) {
+    html += '<tr><td><span class="swatch" style="background:' + COLORS[c] + '"></span>' + c + '</td>';
+    ['near', 'mid', 'far'].forEach(function(e) {
+      var a = agg[c + ':' + e];
+      var m = a ? mean(a.errors) : NaN;
+      html += '<td>' + (isFinite(m) ? Math.round(m) : '—') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+
+  // ClickSense — hold duration by condition
+  html += '<h2>Hold Duration (ms) &mdash; mousedown to mouseup</h2>';
+  html += '<p style="font-size:0.85rem; color:rgb(170,170,175)">ClickSense motor-confidence signal. Shorter holds suggest more decisive clicks.</p>';
+  html += '<table><tr><th>Color</th><th>Near</th><th>Mid</th><th>Far</th></tr>';
+  ['red', 'green', 'cyan'].forEach(function(c) {
+    html += '<tr><td><span class="swatch" style="background:' + COLORS[c] + '"></span>' + c + '</td>';
+    ['near', 'mid', 'far'].forEach(function(e) {
+      var cs = csAgg[c + ':' + e];
+      var m = cs ? mean(cs.holds) : NaN;
+      html += '<td>' + (isFinite(m) ? Math.round(m) : '—') + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+
+  html += '<h2>What to look for</h2>';
+  html += '<ul style="margin-left:1.5rem">';
+  html += '<li><strong>Near eccentricity:</strong> all three colors should be similar — you\'re mostly foveating the target either way.</li>';
+  html += '<li><strong>Far eccentricity:</strong> cyan should maintain RT and hit rate best; red should degrade most. If so, you\'re seeing the L-M / S-cone asymmetry directly.</li>';
+  html += '<li><strong>Hold duration:</strong> longer holds in "hard" cells (red × far) suggest your motor system was less confident of the target identity at the moment of click.</li>';
+  html += '</ul>';
+
+  html += '<p style="margin-top: 2rem">';
+  html += '<a href="." class="btn">Back to experiments</a> ';
+  html += '<a href="javascript:location.reload()" class="btn" style="background:rgb(120,120,125); color:rgb(10,10,15); margin-left:8px">Run again</a>';
+  html += '</p>';
+
+  html += '<p style="margin-top: 2rem; font-size: 0.82rem; color:rgb(140,140,150)">Session: <span class="tight">' + sessionId + '</span></p>';
+
+  results.innerHTML = html;
+
+  // Send summary
+  posthog.capture('peripheral_complete', {
+    experiment: 'peripheral',
+    session_id: sessionId,
+    total_trials: trialResults.length,
+    hits: trialResults.filter(function(t) { return t.was_hit; }).length,
+    input_type: isTouchDevice ? 'touch' : 'mouse',
+  });
+}
+</script>
+
+</body>
+</html>
