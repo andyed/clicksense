@@ -1,5 +1,7 @@
 # ClickSense
 
+![clicksense — mousedown to mouseup, as a cognitive-load signal](assets/brand/social-header.png)
+
 Click confidence measurement from motor behavior. 2KB, zero dependencies, vendor-agnostic.
 
 ## The idea
@@ -184,6 +186,20 @@ npm run dev     # watch mode
 ## Try it
 
 [**Run the Stroop experiment**](https://andyed.github.io/clicksense/stroop/) — a classic color-word interference task instrumented with ClickSense. You'll contribute anonymous mouse dynamics data and see your own per-condition hold duration and approach trajectory results at the end.
+
+## Family
+
+Part of the [mindbendingpixels](https://mindbendingpixels.com) sub-family of scientifically-grounded page-interaction measurement libraries:
+
+- **ClickSense** — mousedown→mouseup latency + approach dynamics. Click confidence from motor behavior.
+- [**approach-retreat**](https://github.com/andyed/approach-retreat) — SERP cursor dynamics: approach, deferred retreat, rejected retreat. Evaluation-phase task model.
+- [**reading-doppler**](https://github.com/andyed/reading-doppler) — paragraph dwell decomposed by viewport band (top / mid / bot thirds).
+
+All three share the same visual substrate (near-black BG, 8:1-minimum text palette, behavioral-model-as-brand-glyph) and the same posture: raw measurements out, no composite scoring baked in.
+
+### Why cyan for the hold bar
+
+The `HOLD` accent color — Scrutinizer's canonical cyan `#50b4c8` — is grounded in peripheral-color vision. Red-green (L-M) opponency collapses by ~20° eccentricity; the S-cone (blue-yellow) pathway persists to 40-50°, and cyan sits near the photopic luminance peak. The hold bar lives *below* the target ring, so when the eye fixates the target, the bar lives in parafovea — exactly where cyan's peripheral-persistence matters. The glyph's composition is self-demonstrating. See Scrutinizer's [peripheral-color draft](https://github.com/andyed/scrutinizer2025) for the underlying vision science.
 
 ## Research
 
