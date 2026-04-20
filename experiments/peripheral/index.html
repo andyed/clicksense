@@ -42,6 +42,15 @@
                   color: rgb(120, 120, 125); font-family: ui-monospace, monospace; z-index: 50; }
     .counter { position: fixed; top: 8px; right: 12px; font-size: 0.72rem;
                color: rgb(120, 120, 125); font-family: ui-monospace, monospace; z-index: 50; }
+    #progress-bar { position: fixed; left: 0; right: 0; bottom: 0; height: 28px; z-index: 50;
+                    display: flex; align-items: center; padding: 0 14px;
+                    background: rgba(18, 18, 24, 0.9); border-top: 1px solid rgba(80, 180, 200, 0.2); }
+    #progress-track { flex: 1; height: 4px; background: rgb(32, 32, 38); border-radius: 2px;
+                      overflow: hidden; margin: 0 14px; }
+    #progress-fill { height: 100%; width: 0; background: rgb(80, 180, 200);
+                     transition: width 0.4s ease; }
+    #stats { font-size: 0.72rem; color: rgb(170, 170, 175);
+             font-family: ui-monospace, monospace; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -57,12 +66,12 @@
 
   <h2>The trial</h2>
   <ol style="margin-left: 1.5rem; margin-bottom: 1rem;">
-    <li>Look at the <span class="tight">+</span> in the center. Move your cursor there.</li>
+    <li>Look at the pulsing <span class="tight">+</span> in the center. Move your cursor there.</li>
     <li>Click the <span class="tight">+</span> to start the trial.</li>
     <li>A colored target appears somewhere on-screen. Click it.</li>
     <li>Keep looking at the center until you click the target.</li>
   </ol>
-  <p>54 trials. About 6 minutes. No breaks.</p>
+  <p>27 trials. About 3 minutes. No breaks.</p>
 
   <h2>Data</h2>
   <p>Each click is sent anonymously to PostHog as a <span class="tight">peripheral_click</span> event for the research dataset. Trial conditions (target color, eccentricity, hemifield, reaction time, click error) are attached. No identifiable information is captured.</p>
@@ -77,6 +86,11 @@
 <canvas id="stage" style="display:none"></canvas>
 <div id="cursor"><svg viewBox="0 0 24 24" width="24" height="24"><polygon points="0,0 12,12 6,12 8,20 6,21 4,13 0,13" fill="rgb(228,228,216)" stroke="rgb(10,10,15)" stroke-width="1"/></svg></div>
 <div class="counter" id="counter"></div>
+<div id="progress-bar" style="display:none">
+  <div id="stats-left" style="font-size:0.72rem;color:rgb(170,170,175);font-family:ui-monospace,monospace;white-space:nowrap;">—</div>
+  <div id="progress-track"><div id="progress-fill"></div></div>
+  <div id="stats">—</div>
+</div>
 <div class="footer-bar">clicksense · peripheral v1</div>
 
 <!-- RESULTS -->
@@ -104,14 +118,14 @@ var COLORS = {
 var ECC_FRACS = { near: 0.22, mid: 0.45, far: 0.68 };
 
 var TARGET_RADIUS = 22;    // px — reasonable Fitts target at all eccs
-var FIXATION_RADIUS = 14;  // px — click-to-start region
-var POST_FIXATION_DELAY_MIN = 400;   // ms
-var POST_FIXATION_DELAY_MAX = 800;   // ms
+var FIXATION_RADIUS = 16;  // px — click-to-start region (slightly larger = easier hit)
+var POST_FIXATION_DELAY_MIN = 300;   // ms
+var POST_FIXATION_DELAY_MAX = 650;   // ms
 var TARGET_MAX_VISIBLE_MS = 2500;    // ms — timeout if user doesn't find it
 var FEEDBACK_FLASH_MS = 160;         // ms — brief color flash on hit
-var ITI_MS = 600;                    // ms — inter-trial interval
+var ITI_MS = 350;                    // ms — inter-trial interval (shorter, pace stays brisk)
 var CLICK_HIT_TOLERANCE = 12;        // px — generous beyond target radius
-var REPS_PER_CELL = 6;               // 3 × 3 × 6 = 54 trials
+var REPS_PER_CELL = 3;               // 3 × 3 × 3 = 27 trials (~3 min)
 
 // ============================================================================
 //   STATE
@@ -126,11 +140,17 @@ var state = 'intro';   // intro | fixation | waiting_for_target | target_visible
 var targetShownAt = 0;
 var targetPos = null;
 var timerId = null;
+var rafId = null;
+var pulseStartT = 0;
 
 var canvas = document.getElementById('stage');
 var ctx;
 var cursorEl = document.getElementById('cursor');
 var counterEl = document.getElementById('counter');
+var progressBarEl = document.getElementById('progress-bar');
+var progressFillEl = document.getElementById('progress-fill');
+var statsLeftEl = document.getElementById('stats-left');
+var statsEl = document.getElementById('stats');
 var centerX, centerY, halfMin;
 
 function resize() {
@@ -231,7 +251,8 @@ var cs = new ClickSenseLib.ClickSense({
 //   RENDER
 // ============================================================================
 
-function drawFixation() {
+function drawFixation(pulseT) {
+  // The crosshair itself
   ctx.strokeStyle = 'rgb(210, 210, 200)';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -240,12 +261,24 @@ function drawFixation() {
   ctx.moveTo(centerX, centerY - 10);
   ctx.lineTo(centerX, centerY + 10);
   ctx.stroke();
-  // Ring around fixation to indicate clickable
-  ctx.strokeStyle = 'rgb(110, 175, 255)';
+  // Pulsing ring around fixation — signals "click me"
+  // pulseT ∈ [0, 1) drives a sine pulse: radius oscillates ±3px around FIXATION_RADIUS.
+  var pulse = Math.sin((pulseT || 0) * Math.PI * 2);
+  var r = FIXATION_RADIUS + pulse * 3;
+  var alpha = 0.6 + 0.4 * (0.5 + 0.5 * pulse);
+  ctx.strokeStyle = 'rgba(80, 180, 200, ' + alpha.toFixed(2) + ')';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(centerX, centerY, FIXATION_RADIUS, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
   ctx.stroke();
+  // Instruction label (only visible when waiting for the start click)
+  if (state === 'fixation') {
+    ctx.fillStyle = 'rgb(170, 170, 175)';
+    ctx.font = '13px ui-monospace, Menlo, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('click + to start trial', centerX, centerY + FIXATION_RADIUS + 18);
+  }
 }
 
 function drawTarget(pos, color, flash) {
@@ -272,10 +305,14 @@ function render() {
   ctx.fillStyle = 'rgb(10, 10, 15)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Pulse phase: 1.4s period ≈ easy-to-follow breath rate.
+  var pulseT = ((performance.now() - pulseStartT) % 1400) / 1400;
+
   if (state === 'fixation') {
-    drawFixation();
+    drawFixation(pulseT);
   } else if (state === 'waiting_for_target') {
-    drawFixation();
+    // Ring stays steady (no pulse) once clicked — tells user "locked in."
+    drawFixation(0);
   } else if (state === 'target_visible') {
     drawMiniFixation();
     drawTarget(targetPos, trials[currentTrialIdx].color_css);
@@ -283,8 +320,42 @@ function render() {
     drawMiniFixation();
   }
 
-  // Counter update
-  counterEl.textContent = 'trial ' + Math.min(currentTrialIdx + 1, trials.length) + ' / ' + trials.length;
+  updateProgress();
+}
+
+function updateProgress() {
+  var total = trials.length || 1;
+  var frac = Math.min(currentTrialIdx / total, 1);
+  progressFillEl.style.width = (frac * 100).toFixed(1) + '%';
+
+  statsLeftEl.textContent = 'trial ' + Math.min(currentTrialIdx + 1, total) + ' / ' + total;
+
+  var done = trialResults.length;
+  var hits = trialResults.filter(function(t) { return t.was_hit; }).length;
+  var hitPct = done > 0 ? Math.round(100 * hits / done) : 0;
+  var rts = trialResults.map(function(t) { return t.trial_rt_ms; })
+                         .filter(function(v) { return v != null; });
+  var avgRt = rts.length > 0 ? Math.round(rts.reduce(function(a, b) { return a + b; }, 0) / rts.length) : null;
+
+  var parts = [];
+  if (done > 0) parts.push('hits ' + hits + '/' + done + ' (' + hitPct + '%)');
+  if (avgRt != null) parts.push('avg ' + avgRt + 'ms');
+  statsEl.textContent = parts.length ? parts.join('  ·  ') : '—';
+}
+
+function startRafLoop() {
+  stopRafLoop();
+  function tick() {
+    render();
+    rafId = requestAnimationFrame(tick);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+function stopRafLoop() {
+  if (rafId != null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
 }
 
 // ============================================================================
@@ -304,9 +375,13 @@ function startExperiment() {
   document.getElementById('intro').style.display = 'none';
   canvas.style.display = 'block';
   cursorEl.style.display = 'block';
+  progressBarEl.style.display = 'flex';
+  counterEl.style.display = 'none'; // progress bar handles the counter now
   resize();
   trials = generateTrials();
   currentTrialIdx = 0;
+  pulseStartT = performance.now();
+  startRafLoop();
   nextTrial();
 }
 
@@ -317,6 +392,7 @@ function nextTrial() {
   }
   state = 'fixation';
   currentTrialMeta = null;
+  pulseStartT = performance.now();
   render();
 }
 
@@ -426,9 +502,11 @@ function mean(arr) {
 
 function finishExperiment() {
   state = 'results';
+  stopRafLoop();
   canvas.style.display = 'none';
   cursorEl.style.display = 'none';
   counterEl.style.display = 'none';
+  progressBarEl.style.display = 'none';
 
   var results = document.getElementById('results');
   results.style.display = 'block';
