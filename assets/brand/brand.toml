@@ -1,0 +1,100 @@
+# ClickSense — brand tokens (muriel brand.toml schema v2)
+#
+# Serialized 2026-05-30 from the canonical logo assets (images/clicksense_logo_*.png)
+# + favicon set in this directory. ClickSense had brand ASSETS but no serialized
+# tokens; this is the source of truth muriel loads across channels.
+#
+# Palette extracted from the logo: a teal ECG/pulse waveform (#04ceb8) with a
+# click-point dot, on a dark navy ground (#151c2e), wordmark "ClickSense" below.
+# The pulse-line IS the mark — a click-timing instrument drawn as a heartbeat.
+
+[meta]
+name             = "ClickSense"
+slug             = "clicksense"
+version          = "1.0.0"
+owner_repo       = "clicksense"
+canonical_source = "assets/brand/clicksense_logo_onblack.png"
+ownership_rule   = "ClickSense brand assets are owned by the clicksense repo; do not regenerate the logo/pulse-mark elsewhere — reference these files."
+tagline          = "Mousedown-to-mouseup latency as a cognitive signal."
+
+# ── Colors ──────────────────────────────────────────────────────────────────
+# TWO surfaces. The logo lives on navy; the analysis/reporting surface is light
+# editorial (navy text on warm-white, where dense tables + light-bg matplotlib
+# charts read best). Both are first-class.
+[colors]
+# Light editorial surface (notebooks, reports, docs) — DEFAULT reporting surface.
+background         = "#faf9f5"   # warm near-white (not pure #fff — OLED-cream rule)
+foreground         = "#151c2e"   # logo navy as body text — 16.97:1 on bg, PASS 8:1
+background_2       = "#f0eee6"   # subtle panel / table-stripe
+foreground_muted   = "#3a4256"   # muted navy for captions — still ≥8:1 on bg
+
+# Brand ground (logo, favicons, dark surfaces).
+navy               = "#151c2e"   # the logo background
+navy_2             = "#0f1422"   # deeper navy
+cream              = "#e6e4d2"   # text on navy — 13.25:1, PASS 8:1
+
+# Accent — the teal pulse-line. DECORATIVE ONLY on light surfaces.
+# #04ceb8 on white = 2.00:1 → FAILS as text. Use for borders, rules, the
+# pulse graphic, callout left-edges — never running body text on light.
+accent             = "#04ceb8"   # teal pulse — decorative
+accent_deep        = "#005d68"   # deep teal (secondary mark color); 7.59:1 on white — borders/labels, not body
+accent_ink_on_navy = "#04ceb8"   # teal AS TEXT is allowed on navy only (8.51:1, PASS)
+accent_decorative  = "#04ceb8"
+
+[colors.aliases]
+text              = "foreground"
+text-muted        = "foreground_muted"
+surface-primary   = "background"
+surface-panel     = "background_2"
+decorative        = "accent_decorative"
+
+# Semantic states — tuned for the light editorial surface (text ≥8:1 on its own surface).
+[semantic.success]
+text    = "#1b6e2e"
+surface = "#eef6ef"
+border  = "#2e8b40"
+
+[semantic.error]
+text    = "#a4151c"
+surface = "#fbeeee"
+border  = "#c8323a"
+
+[semantic.info]
+text    = "#005d68"   # deep teal — on-brand
+surface = "#e9f5f6"
+border  = "#04ceb8"
+
+# ── Data-viz palette ──────────────────────────────────────────────────────────
+# Anchored on the teal accent; light-surface safe. Matches the existing
+# matplotlib light theme the notebooks already render with.
+[viz]
+categorical = ["#005d68", "#b5651d", "#1b6ca8", "#6a8e3a", "#8a4f9e"]
+sequential  = ["#faf9f5", "#9fd0d4", "#04ceb8", "#005d68", "#151c2e"]
+diverging   = ["#a4151c", "#faf9f5", "#005d68"]
+
+# ── Typography ──────────────────────────────────────────────────────────────
+# One font treatment (muriel rule): editorial serif for prose, mono for the
+# numbers/code that ARE the subject. Vary background, not type.
+[typography]
+display_family = "'Iowan Old Style', Georgia, 'Times New Roman', serif"
+body_family    = "'Iowan Old Style', Georgia, serif"
+mono_family    = "'SF Mono', 'JetBrains Mono', Menlo, monospace"
+body_weight    = 400
+
+[typography.scale]
+h1      = { size = 34, weight = 700, line_height = 1.15, tracking_em = -0.01 }
+h2      = { size = 24, weight = 700, line_height = 1.20 }
+h3      = { size = 19, weight = 700, line_height = 1.30 }
+body    = { size = 17, weight = 400, line_height = 1.65 }
+caption = { size = 16, weight = 500, line_height = 1.45 }   # ≥16px caption floor
+mono    = { size = 14, weight = 400, line_height = 1.55 }
+label   = { size = 12, weight = 700, line_height = 1.20, tracking_em = 0.10, upper = true }
+
+[spacing]
+xs = 4; sm = 8; md = 16; lg = 24; xl = 40; xxl = 64
+
+[radii]
+sm = 4; md = 8; lg = 14
+
+[motion]
+motion_preference = "respect-prefers-reduced-motion"
