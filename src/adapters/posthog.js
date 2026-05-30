@@ -12,6 +12,13 @@
  *   });
  */
 
+// Version stamp injected at build time via esbuild `define` (see build.js).
+// The typeof guard keeps the un-built `src` import path working (typeof on an
+// undeclared identifier is safe in JS — returns 'undefined'). Fallback version
+// MUST equal the current package.json version.
+const CLICKSENSE_VERSION = (typeof __CLICKSENSE_VERSION__ !== 'undefined') ? __CLICKSENSE_VERSION__ : '0.2.0';
+const CLICKSENSE_BUILD = (typeof __CLICKSENSE_BUILD__ !== 'undefined') ? __CLICKSENSE_BUILD__ : 'dev';
+
 /**
  * @param {object} [posthogInstance] - PostHog instance. Falls back to window.posthog.
  * @param {string} [eventName='click_confidence'] - PostHog event name.
@@ -74,6 +81,12 @@ export function createPostHogAdapter(posthogInstance, eventName = 'click_confide
       props.approach_max_deviation = event.approach.approach_max_deviation;
       props.approach_trajectory_type = event.approach.approach_trajectory_type;
     }
+
+    // Version-stamp every event so bundle-version skew across embedding sites
+    // is queryable directly in the cs_click table. Added unconditionally;
+    // extraProps below can still override if a site needs to.
+    props.clicksense_version = CLICKSENSE_VERSION;
+    props.clicksense_build = CLICKSENSE_BUILD;
 
     if (extraProps) Object.assign(props, extraProps);
 
